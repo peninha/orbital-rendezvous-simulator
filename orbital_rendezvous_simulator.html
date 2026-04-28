@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador 2D de Rendezvous Orbital</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 18px; line-height: 1.35; background: #fafafa; color: #222; }
+    h1 { margin: 0; font-size: 30px; }
+    .version { margin-top: 3px; color: #666; font-size: 12px; }
+    h3 { margin: 0 0 8px 0; font-size: 18px; }
+    .topbar { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; margin-bottom: 14px; }
+    .toptools { display: flex; gap: 12px; align-items: start; flex-wrap: wrap; justify-content: flex-end; }
+    .lang-switch { display: flex; gap: 6px; align-items: center; }
+    .lang-button { padding: 6px 10px; min-width: 64px; }
+    .lang-button.active { background: #eef5ff; border-color: #557; font-weight: 700; }
+    .top-right-card { padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; min-width: 620px; }
+    .preset-row-top { display: grid; grid-template-columns: 1fr auto auto auto auto auto; gap: 8px; align-items: center; }
+    .helpbox { padding: 14px; border: 1px solid #ddd; background: white; border-radius: 8px; margin-bottom: 14px; }
+    .hidden { display: none; }
+
+    .maingrid { display: grid; grid-template-columns: 1.05fr 1.05fr 1fr; gap: 14px; align-items: start; }
+    .leftstack { display: grid; gap: 14px; }
+
+    .card { padding: 14px; border: 1px solid #ddd; background: white; border-radius: 8px; }
+    .control { display: grid; grid-template-columns: 1fr; gap: 4px; margin-bottom: 10px; }
+    .row2 { display: grid; grid-template-columns: 1fr 120px; gap: 10px; align-items: center; }
+    .row3 { display: grid; grid-template-columns: 1fr 80px 95px; gap: 10px; align-items: center; }
+    .rowCheck { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    label { font-size: 14px; font-weight: 600; }
+    input[type="number"], input[type="text"], select { padding: 6px 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
+    input[type="range"] { width: 100%; }
+    .small { color: #555; font-size: 13px; }
+
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 0 0; }
+    button { padding: 8px 14px; font-size: 14px; border: 1px solid #888; border-radius: 6px; background: white; cursor: pointer; }
+    button:hover { background: #f0f0f0; }
+    button.primary { background: #f7f7ff; border-color: #666; min-width: 112px; }
+    button.danger { border-color: #b66; color: #822; }
+    button.mini { padding: 5px 8px; font-size: 12px; }
+
+    .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; margin-top: 18px; }
+    .plotbox { border: 1px solid #ddd; background: white; border-radius: 8px; padding: 8px; }
+
+    .summary-wrap { margin-top: 18px; }
+    table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; font-size: 14px; }
+    th, td { border-bottom: 1px solid #eee; padding: 8px 10px; text-align: left; }
+    th { background: #f6f6f6; position: sticky; top: 0; }
+    .statusbar { margin-top: 10px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; }
+    .graph-card { grid-column: 1 / -1; }
+    .graph-controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1.1fr auto; gap: 12px; align-items: end; }
+    .graph-controls .control { margin-bottom: 0; }
+    .graph-controls .buttons { margin: 0; align-items: end; }
+
+    .nc-card { border: 1px solid #e3e3e3; border-radius: 8px; margin-bottom: 10px; background: #fcfcfc; overflow: hidden; }
+    .nc-head { display:flex; justify-content:space-between; align-items:center; padding: 10px; cursor: pointer; user-select: none; }
+    .nc-head:hover { background: #f7f7f7; }
+    .nc-title-wrap { display:flex; gap:8px; align-items:center; }
+    .nc-chevron { font-size: 12px; width: 14px; display:inline-block; }
+    .nc-body { padding: 0 10px 10px 10px; }
+    .collapsed { display: none; }
+    .orbit-advanced { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd; }
+
+    @media (max-width: 1400px) {
+      .topbar, .maingrid, .plots { grid-template-columns: 1fr; }
+      .toptools { justify-content: stretch; }
+      .top-right-card { min-width: 0; }
+      .preset-row-top { grid-template-columns: 1fr auto auto auto; }
+      .graph-controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+    <div class="topbar">
+    <div>
+      <h1 data-i18n="appTitle">Simulador 2D de Rendezvous Orbital</h1>
+      <div class="version" data-i18n="versionLabel">Versão 8.1</div>
+    </div>
+    <div class="toptools">
+      <div class="lang-switch" aria-label="Language">
+        <button id="langPt" class="lang-button" onclick="setLanguage('pt')" title="Português">🇧🇷 PT</button>
+        <button id="langEn" class="lang-button" onclick="setLanguage('en')" title="English">🇺🇸 EN</button>
+      </div>
+      <button data-i18n="helpButton" onclick="toggleHelp()">Help / Info</button>
+      <div class="top-right-card">
+        <div class="small" style="margin-bottom:6px;"><b data-i18n="presetsTitle">Presets</b></div>
+        <div class="preset-row-top">
+          <select id="presetSelect"></select>
+          <button data-i18n="loadButton" onclick="loadSelectedPreset()">Carregar</button>
+          <button data-i18n="saveCurrentButton" onclick="savePreset()">Salvar atual</button>
+          <button data-i18n="removeButton" class="danger" onclick="removePreset()">Remover</button>
+          <button data-i18n="exportListButton" onclick="exportPresetList()">Exportar lista</button>
+          <button data-i18n="importButton" onclick="document.getElementById('presetImportInput').click()">Importar</button>
+        </div>
+        <input id="presetImportInput" type="file" accept=".json,application/json" class="hidden" onchange="importPresetFile(event)">
+      </div>
+    </div>
+  </div>
+
+    <div id="helpBox" class="helpbox hidden">
+    <b data-i18n="helpWhatTitle">O que ? este simulador</b>
+    <p data-i18n-html="helpIntro" style="margin-top:8px;">
+      Este simulador mostra um rendezvous orbital 2D simplificado e coplanar entre um <b>Target</b> e um <b>Chaser</b>.
+      Voc? define as ?rbitas iniciais, programa queimas NC por <b>N voltas + fase</b>, anima a aproxima??o e compara a vista
+      inercial com a trajet?ria relativa no frame do Target.
+    </p>
+    <b data-i18n="helpHowTitle">Como usar</b>
+    <ul>
+      <li data-i18n-html="helpInitialPreset">Use <b>Configura??o inicial (sem preset)</b> e clique em <b>Carregar</b> para voltar aos par?metros iniciais.</li>
+      <li data-i18n="helpPresets">Presets salvos, importados ou criados ficam no navegador. Voc? pode remov?-los um por um e exportar a lista completa em JSON.</li>
+      <li data-i18n-html="helpOrbits">Em <b>?rbita inicial do Target</b> e <b>?rbita inicial do Chaser</b>, o modo simples usa ?rbita circular. Para ?rbitas el?pticas, marque <b>Usar ?rbita geral</b>.</li>
+      <li data-i18n-html="helpBurns">As queimas <b>NC</b> s?o disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como refer?ncia a dire??o da <b>Apside 1 do Chaser</b>.</li>
+      <li data-i18n="helpSliders">D? duplo clique em qualquer slider para retornar ao zero. Quando o slider n?o permite zero, ele volta ao menor valor permitido.</li>
+      <li data-i18n-html="helpGradient">No gr?fico inercial, a trajet?ria do Chaser usa um gradiente <b>preto ? azul</b> para indicar in?cio ? fim.</li>
+    </ul>
+  </div>
+  <div class="maingrid">
+    <div class="leftstack">
+      <div class="card">
+        <h3>Órbita inicial do Target</h3>
+        <div class="rowCheck">
+          <input type="checkbox" id="targetUseGeneral" onchange="updateOrbitSections('target')">
+          <label for="targetUseGeneral" style="font-weight:600;">Usar órbita geral</label>
+        </div>
+
+        <div id="targetSimpleSection">
+          <div class="control">
+            <label data-i18n="targetAltLabel">Altitude do Target (km)</label>
+            <div class="row2">
+              <input type="range" id="targetAltSlider" min="2" max="4" step="0.001">
+              <input type="number" id="targetAlt" min="100" max="10000" step="1">
+            </div>
+            <div class="small">Slider logarítmico: 100 km até 10.000 km.</div>
+          </div>
+          <div class="control">
+            <label data-i18n="targetPhaseRelLabel">Fase inicial do Target relativa ao Chaser (graus)</label>
+            <div class="row2">
+              <input type="range" id="targetPhaseRelSlider" min="0" max="360" step="0.1">
+              <input type="number" id="targetPhaseRel" min="0" max="360" step="0.1">
+            </div>
+          </div>
+        </div>
+
+        <div id="targetAdvancedSection" class="orbit-advanced hidden">
+          <div class="control">
+            <label data-i18n="targetAps1Label">Apside 1 do Target (km)</label>
+            <div class="row2">
+              <input type="range" id="targetAps1Slider" min="100" max="10000" step="1">
+              <input type="number" id="targetAps1" min="100" max="10000" step="1">
+            </div>
+          </div>
+          <div class="control">
+            <label data-i18n="targetAps2Label">Apside 2 do Target (km)</label>
+            <div class="row2">
+              <input type="range" id="targetAps2Slider" min="100" max="10000" step="1">
+              <input type="number" id="targetAps2" min="100" max="10000" step="1">
+            </div>
+          </div>
+          <div class="control">
+            <label data-i18n="targetArgAps1Label">Argumento da Apside 1 do Target (graus)</label>
+            <div class="row2">
+              <input type="range" id="targetArgAps1Slider" min="-180" max="180" step="0.1">
+              <input type="number" id="targetArgAps1" min="-180" max="180" step="0.1">
+            </div>
+          </div>
+          <div class="control">
+            <label data-i18n="targetTrueAnomLabel">Anomalia verdadeira inicial do Target (graus, a partir do periastro)</label>
+            <div class="row2">
+              <input type="range" id="targetTrueAnomSlider" min="0" max="360" step="0.1">
+              <input type="number" id="targetTrueAnom" min="0" max="360" step="0.1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+    <div class="card">
+      <h3>Órbita inicial do Chaser</h3>
+      <div class="rowCheck">
+        <input type="checkbox" id="chaserUseGeneral" onchange="updateOrbitSections('chaser')">
+        <label for="chaserUseGeneral" style="font-weight:600;">Usar órbita geral</label>
+      </div>
+
+      <div id="chaserSimpleSection">
+        <div class="control">
+          <label data-i18n="chaserAltLabel">Altitude do Chaser (km)</label>
+          <div class="row2">
+            <input type="range" id="chaserAltSlider" min="2" max="4" step="0.001">
+            <input type="number" id="chaserAlt" min="100" max="10000" step="1">
+          </div>
+          <div class="small">Slider logarítmico: 100 km até 10.000 km.</div>
+        </div>
+        <div class="control">
+          <label data-i18n="chaserPhaseLabel">Fase inicial do Chaser (graus)</label>
+          <div class="row2">
+            <input type="range" id="chaserPhaseSlider" min="0" max="360" step="0.1">
+            <input type="number" id="chaserPhase" min="0" max="360" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <div id="chaserAdvancedSection" class="orbit-advanced hidden">
+        <div class="control">
+          <label data-i18n="chaserAps1Label">Apside 1 do Chaser (km)</label>
+          <div class="row2">
+            <input type="range" id="chaserAps1Slider" min="100" max="10000" step="1">
+            <input type="number" id="chaserAps1" min="100" max="10000" step="1">
+          </div>
+        </div>
+        <div class="control">
+          <label data-i18n="chaserAps2Label">Apside 2 do Chaser (km)</label>
+          <div class="row2">
+            <input type="range" id="chaserAps2Slider" min="100" max="10000" step="1">
+            <input type="number" id="chaserAps2" min="100" max="10000" step="1">
+          </div>
+        </div>
+        <div class="control">
+          <label data-i18n="chaserArgAps1Label">Argumento da Apside 1 do Chaser (graus)</label>
+          <div class="row2">
+            <input type="range" id="chaserArgAps1Slider" min="-180" max="180" step="0.1">
+            <input type="number" id="chaserArgAps1" min="-180" max="180" step="0.1">
+          </div>
+        </div>
+        <div class="control">
+          <label data-i18n="chaserTrueAnomLabel">Anomalia verdadeira inicial do Chaser (graus, a partir do periastro)</label>
+          <div class="row2">
+            <input type="range" id="chaserTrueAnomSlider" min="0" max="360" step="0.1">
+            <input type="number" id="chaserTrueAnom" min="0" max="360" step="0.1">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="ncBurnsTitle">Queimas NC</h3>
+      <div id="ncContainer"></div>
+      <button data-i18n="addNCButton" onclick="addNC()">Adicionar NC</button>
+    </div>
+
+    <div class="card graph-card">
+      <h3>Gráficos e Animação</h3>
+      <div class="graph-controls">
+        <div class="control">
+          <label>Tempo total de simulação (horas)</label>
+          <div class="row2">
+            <input type="range" id="tFinalHoursSlider" min="0.25" max="48" step="0.25">
+            <input type="number" id="tFinalHours" min="0.25" max="48" step="0.25">
+          </div>
+        </div>
+        <div class="control">
+          <label>Passo de integração dt (s)</label>
+          <div class="row2">
+            <input type="range" id="dtSlider" min="1" max="60" step="1">
+            <input type="number" id="dt" min="1" max="60" step="1">
+          </div>
+        </div>
+        <div class="control">
+          <label>Time warp (simulação / tempo real)</label>
+          <div class="row2">
+            <input type="range" id="timeWarpSlider" min="1" max="3600" step="1">
+            <input type="number" id="timeWarp" min="1" max="3600" step="1">
+          </div>
+        </div>
+        <div class="control">
+          <label>Modo do gráfico relativo</label>
+          <select id="relMode">
+            <option data-i18n="relModeCurvilinear" value="curvilinear" selected>Curvilinear (arco orbital + radial)</option>
+            <option value="lvlh">LVLH linear (projeção vetorial local)</option>
+          </select>
+        </div>
+        <div class="buttons">
+          <button id="playPauseButton" class="primary" onclick="togglePlayPause()">Play</button>
+          <button onclick="resetAnimation()">Resetar animação</button>
+          <button onclick="runSimulation()">Atualizar gráficos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plots">
+    <div class="plotbox"><div id="inertialPlot" style="width:100%;height:580px;"></div></div>
+    <div class="plotbox"><div id="relativePlot" style="width:100%;height:580px;"></div></div>
+  </div>
+
+  <div class="summary-wrap">
+    <table id="summaryTable">
+      <thead>
+        <tr>
+          <th>Órbita / Evento</th>
+          <th>a (km)</th>
+          <th>e</th>
+          <th>Apside 1 alt (km)</th>
+          <th>Apside 2 alt (km)</th>
+          <th>Período (h)</th>
+          <th data-i18n="summaryRelativeTime">Tempo relativo (h)</th>
+          <th>Tempo de missão (h)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="statusbar"><span id="status" class="small" data-i18n="statusReady">Pronto.</span></div>
+  </div>
+
+<script>
+const mu = 398600.4418;
+const Re = 6378.137;
+const LOCAL_PRESET_KEY = 'rendezvous_sim_presets_v7';
+const LANG_KEY = 'rendezvous_sim_lang_v81';
+
+const I18N = {
+  pt: {
+    appTitle: 'Simulador 2D de Rendezvous Orbital',
+    versionLabel: 'Versão 8.1',
+    helpButton: 'Help / Info',
+    presetsTitle: 'Presets',
+    loadButton: 'Carregar',
+    saveCurrentButton: 'Salvar atual',
+    removeButton: 'Remover',
+    exportListButton: 'Exportar lista',
+    importButton: 'Importar',
+    helpWhatTitle: 'O que é este simulador',
+    helpIntro: 'Este simulador mostra um rendezvous orbital 2D simplificado e coplanar entre um <b>Target</b> e um <b>Chaser</b>. Você define as órbitas iniciais, programa queimas NC por <b>N voltas + fase</b>, anima a aproximação e compara a vista inercial com a trajetória relativa no frame do Target.',
+    helpHowTitle: 'Como usar',
+    helpInitialPreset: 'Use <b>Configuração inicial (sem preset)</b> e clique em <b>Carregar</b> para voltar aos parâmetros iniciais.',
+    helpPresets: 'Presets salvos, importados ou criados ficam no navegador. Você pode removê-los um por um e exportar a lista completa em JSON.',
+    helpOrbits: 'Em <b>Órbita inicial do Target</b> e <b>Órbita inicial do Chaser</b>, o modo simples usa órbita circular. Para órbitas elípticas, marque <b>Usar órbita geral</b>.',
+    helpBurns: 'As queimas <b>NC</b> são disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção da <b>Apside 1 do Chaser</b>.',
+    helpSliders: 'Dê duplo clique em qualquer slider para retornar ao zero. Quando o slider não permite zero, ele volta ao menor valor permitido.',
+    helpGradient: 'No gráfico inercial, a trajetória do Chaser usa um gradiente <b>preto → azul</b> para indicar início → fim.',
+    targetOrbitTitle: 'Órbita inicial do Target',
+    chaserOrbitTitle: 'Órbita inicial do Chaser',
+    useGeneralOrbit: 'Usar órbita geral',
+    targetAltLabel: 'Altitude do Target (km)',
+    targetPhaseRelLabel: 'Fase inicial do Target relativa ao Chaser (graus)',
+    targetAps1Label: 'Apside 1 do Target (km)',
+    targetAps2Label: 'Apside 2 do Target (km)',
+    targetArgAps1Label: 'Argumento da Apside 1 do Target (graus)',
+    targetTrueAnomLabel: 'Anomalia verdadeira inicial do Target (graus, a partir do periastro)',
+    chaserAltLabel: 'Altitude do Chaser (km)',
+    chaserPhaseLabel: 'Fase inicial do Chaser (graus)',
+    chaserAps1Label: 'Apside 1 do Chaser (km)',
+    chaserAps2Label: 'Apside 2 do Chaser (km)',
+    chaserArgAps1Label: 'Argumento da Apside 1 do Chaser (graus)',
+    chaserTrueAnomLabel: 'Anomalia verdadeira inicial do Chaser (graus, a partir do periastro)',
+    logSliderHint: 'Slider logarítmico: 100 km até 10.000 km.',
+    ncBurnsTitle: 'Queimas NC',
+    addNCButton: 'Adicionar NC',
+    ncRemoveButton: 'Remover',
+    ncTurnsPhase: 'N voltas + fase',
+    ncDvLabel: 'Δv tangencial (m/s)',
+    graphsTitle: 'Gráficos e Animação',
+    totalTimeLabel: 'Tempo total de simulação (horas)',
+    dtLabel: 'Passo de integração dt (s)',
+    timeWarpLabel: 'Time warp (simulação / tempo real)',
+    relModeLabel: 'Modo do gráfico relativo',
+    relModeCurvilinear: 'Curvilinear (arco orbital + radial)',
+    relModeLvlh: 'LVLH linear (projeção vetorial local)',
+    playButton: 'Play',
+    pauseButton: 'Pause',
+    resetAnimationButton: 'Resetar animação',
+    updateGraphsButton: 'Atualizar gráficos',
+    summaryOrbitEvent: 'Órbita / Evento',
+    summaryPeriod: 'Período (h)',
+    summaryRelativeTime: 'Tempo relativo (h)',
+    summaryMissionTime: 'Tempo de missão (h)',
+    statusReady: 'Pronto.',
+    initialPresetOption: 'Configuração inicial (sem preset)',
+    noPresetOption: 'Nenhum preset',
+    presetNamePrompt: 'Nome do preset:',
+    presetSaved: 'Preset "{name}" salvo.',
+    presetLoaded: 'Preset "{name}" carregado.',
+    presetRemoved: 'Preset "{name}" removido.',
+    initialConfigLoaded: 'Configuração inicial carregada.',
+    seedLoaded: '{count} preset(s) de exemplo carregado(s).',
+    importSuccess: 'Preset(s) importado(s) com sucesso.',
+    importFailure: 'Falha ao importar JSON de preset.',
+    animationReset: 'Animação resetada para o instante inicial.',
+    animationStatus: 'Animação: t = {seconds} s ({hours} h), time warp = {warp}x',
+    simulationUpdated: 'Simulação atualizada. {steps} passos, duração {duration} h, dt = {dt}s.',
+    pausedAt: 'Pausado em t = {seconds} s ({hours} h).',
+    errorPrefix: 'Erro: ',
+    targetInitial: 'Target inicial',
+    chaserInitial: 'Chaser inicial',
+    burnEvent: '{turns} voltas + {phase}°',
+    earth: 'Terra',
+    chaserGradient: 'Chaser (gradiente início→fim)',
+    chaserApsAxis: 'Eixo Apside 1–2 do Chaser',
+    chaserAps1: 'Apside 1 do Chaser',
+    chaserAps2: 'Apside 2 do Chaser',
+    targetNow: 'Target (agora)',
+    chaserNow: 'Chaser (agora)',
+    inertialTitle: 'Vista inercial — polo norte',
+    relativeTrajectory: 'Trajetória relativa',
+    relativeTitleLvlh: 'Frame relativo do Target — LVLH linear',
+    relativeTitleCurvilinear: 'Frame relativo do Target — Curvilinear',
+    positiveDown: 'positivo para baixo'
+  },
+  en: {
+    appTitle: '2D Orbital Rendezvous Simulator',
+    versionLabel: 'Version 8.1',
+    helpButton: 'Help / Info',
+    presetsTitle: 'Presets',
+    loadButton: 'Load',
+    saveCurrentButton: 'Save current',
+    removeButton: 'Remove',
+    exportListButton: 'Export list',
+    importButton: 'Import',
+    helpWhatTitle: 'What this simulator does',
+    helpIntro: 'This simulator shows a simplified coplanar 2D orbital rendezvous between a <b>Target</b> and a <b>Chaser</b>. You define the initial orbits, schedule NC burns by <b>N revolutions + phase</b>, animate the approach, and compare the inertial view with the relative trajectory in the Target frame.',
+    helpHowTitle: 'How to use',
+    helpInitialPreset: 'Use <b>Initial configuration (no preset)</b> and click <b>Load</b> to restore the starting parameters.',
+    helpPresets: 'Saved, imported, or newly created presets are kept in the browser. You can remove them one by one and export the full list as JSON.',
+    helpOrbits: 'In <b>Target initial orbit</b> and <b>Chaser initial orbit</b>, simple mode uses a circular orbit. For elliptical orbits, enable <b>Use general orbit</b>.',
+    helpBurns: '<b>NC</b> burns fire when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser Apside 1</b> direction as the reference.',
+    helpSliders: 'Double-click any slider to return to zero. When a slider cannot reach zero, it returns to its minimum value.',
+    helpGradient: 'In the inertial plot, the Chaser trajectory uses a <b>black → blue</b> gradient to show start → finish.',
+    targetOrbitTitle: 'Target initial orbit',
+    chaserOrbitTitle: 'Chaser initial orbit',
+    useGeneralOrbit: 'Use general orbit',
+    targetAltLabel: 'Target altitude (km)',
+    targetPhaseRelLabel: 'Target initial phase relative to Chaser (degrees)',
+    targetAps1Label: 'Target Apside 1 (km)',
+    targetAps2Label: 'Target Apside 2 (km)',
+    targetArgAps1Label: 'Target Apside 1 argument (degrees)',
+    targetTrueAnomLabel: 'Target initial true anomaly (degrees, from periapsis)',
+    chaserAltLabel: 'Chaser altitude (km)',
+    chaserPhaseLabel: 'Chaser initial phase (degrees)',
+    chaserAps1Label: 'Chaser Apside 1 (km)',
+    chaserAps2Label: 'Chaser Apside 2 (km)',
+    chaserArgAps1Label: 'Chaser Apside 1 argument (degrees)',
+    chaserTrueAnomLabel: 'Chaser initial true anomaly (degrees, from periapsis)',
+    logSliderHint: 'Logarithmic slider: 100 km to 10,000 km.',
+    ncBurnsTitle: 'NC burns',
+    addNCButton: 'Add NC',
+    ncRemoveButton: 'Remove',
+    ncTurnsPhase: 'N revolutions + phase',
+    ncDvLabel: 'Tangential Δv (m/s)',
+    graphsTitle: 'Plots and Animation',
+    totalTimeLabel: 'Total simulation time (hours)',
+    dtLabel: 'Integration step dt (s)',
+    timeWarpLabel: 'Time warp (simulation / real time)',
+    relModeLabel: 'Relative plot mode',
+    relModeCurvilinear: 'Curvilinear (orbital arc + radial)',
+    relModeLvlh: 'LVLH linear (local vector projection)',
+    playButton: 'Play',
+    pauseButton: 'Pause',
+    resetAnimationButton: 'Reset animation',
+    updateGraphsButton: 'Update plots',
+    summaryOrbitEvent: 'Orbit / Event',
+    summaryPeriod: 'Period (h)',
+    summaryRelativeTime: 'Relative time (h)',
+    summaryMissionTime: 'Mission time (h)',
+    statusReady: 'Ready.',
+    initialPresetOption: 'Initial configuration (no preset)',
+    noPresetOption: 'No preset',
+    presetNamePrompt: 'Preset name:',
+    presetSaved: 'Preset "{name}" saved.',
+    presetLoaded: 'Preset "{name}" loaded.',
+    presetRemoved: 'Preset "{name}" removed.',
+    initialConfigLoaded: 'Initial configuration loaded.',
+    seedLoaded: '{count} example preset(s) loaded.',
+    importSuccess: 'Preset(s) imported successfully.',
+    importFailure: 'Failed to import preset JSON.',
+    animationReset: 'Animation reset to the initial instant.',
+    animationStatus: 'Animation: t = {seconds} s ({hours} h), time warp = {warp}x',
+    simulationUpdated: 'Simulation updated. {steps} steps, duration {duration} h, dt = {dt}s.',
+    pausedAt: 'Paused at t = {seconds} s ({hours} h).',
+    errorPrefix: 'Error: ',
+    targetInitial: 'Target initial',
+    chaserInitial: 'Chaser initial',
+    burnEvent: '{turns} revolutions + {phase}°',
+    earth: 'Earth',
+    chaserGradient: 'Chaser (start→finish gradient)',
+    chaserApsAxis: 'Chaser Apside 1–2 axis',
+    chaserAps1: 'Chaser Apside 1',
+    chaserAps2: 'Chaser Apside 2',
+    targetNow: 'Target (now)',
+    chaserNow: 'Chaser (now)',
+    inertialTitle: 'Inertial view — north pole',
+    relativeTrajectory: 'Relative trajectory',
+    relativeTitleLvlh: 'Target relative frame — LVLH linear',
+    relativeTitleCurvilinear: 'Target relative frame — Curvilinear',
+    positiveDown: 'positive downward'
+  }
+};
+
+let currentLang = localStorage.getItem(LANG_KEY) || 'pt';
+
+function t(key, vars={}){
+  const dict = I18N[currentLang] || I18N.pt;
+  const fallback = I18N.pt[key] || key;
+  const value = dict[key] || fallback;
+  return String(value).replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? '');
+}
+
+function setStatus(key, vars={}){
+  const el = document.getElementById('status');
+  if(el) el.innerText = t(key, vars);
+}
+
+function setControlLabel(inputId, key){
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  const label = document.querySelector(`label[for="${inputId}"]`) || input.closest('.control')?.querySelector('label');
+  if(label) label.innerText = t(key);
+}
+
+function updatePlayPauseText(){
+  const button = document.getElementById('playPauseButton');
+  if(button) button.innerText = animationRunning ? t('pauseButton') : t('playButton');
+}
+
+function updateNCTexts(){
+  document.querySelectorAll('.nc-card').forEach(card => {
+    const remove = card.querySelector('.nc-remove-button');
+    const turns = card.querySelector('.nc-turns-label');
+    const dv = card.querySelector('.nc-dv-label');
+    if(remove) remove.innerText = t('ncRemoveButton');
+    if(turns) turns.innerText = t('ncTurnsPhase');
+    if(dv) dv.innerText = t('ncDvLabel');
+  });
+}
+
+function applyLanguage(){
+  document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+  document.title = t('appTitle');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+
+  document.getElementById('langPt')?.classList.toggle('active', currentLang === 'pt');
+  document.getElementById('langEn')?.classList.toggle('active', currentLang === 'en');
+
+  const targetCard = document.getElementById('targetUseGeneral')?.closest('.card');
+  const chaserCard = document.getElementById('chaserUseGeneral')?.closest('.card');
+  if(targetCard) targetCard.querySelector('h3').innerText = t('targetOrbitTitle');
+  if(chaserCard) chaserCard.querySelector('h3').innerText = t('chaserOrbitTitle');
+  const ncTitle = document.getElementById('ncContainer')?.closest('.card')?.querySelector('h3');
+  const graphTitle = document.querySelector('.graph-card h3');
+  if(ncTitle) ncTitle.innerText = t('ncBurnsTitle');
+  if(graphTitle) graphTitle.innerText = t('graphsTitle');
+
+  [
+    ['targetUseGeneral','useGeneralOrbit'], ['targetAlt','targetAltLabel'], ['targetPhaseRel','targetPhaseRelLabel'],
+    ['targetAps1','targetAps1Label'], ['targetAps2','targetAps2Label'], ['targetArgAps1','targetArgAps1Label'], ['targetTrueAnom','targetTrueAnomLabel'],
+    ['chaserUseGeneral','useGeneralOrbit'], ['chaserAlt','chaserAltLabel'], ['chaserPhase','chaserPhaseLabel'],
+    ['chaserAps1','chaserAps1Label'], ['chaserAps2','chaserAps2Label'], ['chaserArgAps1','chaserArgAps1Label'], ['chaserTrueAnom','chaserTrueAnomLabel'],
+    ['tFinalHours','totalTimeLabel'], ['dt','dtLabel'], ['timeWarp','timeWarpLabel']
+  ].forEach(([id, key]) => setControlLabel(id, key));
+
+  document.querySelectorAll('#targetAlt, #chaserAlt').forEach(input => {
+    const hint = input.closest('.control')?.querySelector('.small');
+    if(hint) hint.innerText = t('logSliderHint');
+  });
+
+  const relModeLabel = document.getElementById('relMode')?.closest('.control')?.querySelector('label');
+  if(relModeLabel) relModeLabel.innerText = t('relModeLabel');
+  const relMode = document.getElementById('relMode');
+  if(relMode){
+    relMode.options[0].innerText = t('relModeCurvilinear');
+    relMode.options[1].innerText = t('relModeLvlh');
+  }
+  const addNCButton = document.querySelector('button[onclick="addNC()"]');
+  const resetButton = document.querySelector('button[onclick="resetAnimation()"]');
+  const updateButton = document.querySelector('button[onclick="runSimulation()"]');
+  if(addNCButton) addNCButton.innerText = t('addNCButton');
+  if(resetButton) resetButton.innerText = t('resetAnimationButton');
+  if(updateButton) updateButton.innerText = t('updateGraphsButton');
+
+  const summaryHeaders = document.querySelectorAll('#summaryTable th');
+  if(summaryHeaders[0]) summaryHeaders[0].innerText = t('summaryOrbitEvent');
+  if(summaryHeaders[5]) summaryHeaders[5].innerText = t('summaryPeriod');
+  if(summaryHeaders[6]) summaryHeaders[6].innerText = t('summaryRelativeTime');
+  if(summaryHeaders[7]) summaryHeaders[7].innerText = t('summaryMissionTime');
+
+  updatePlayPauseText();
+  updateNCTexts();
+  refreshPresetList();
+  if(simData) plotData(simData, currentAnimIdx);
+}
+
+function setLanguage(lang){
+  currentLang = lang === 'en' ? 'en' : 'pt';
+  localStorage.setItem(LANG_KEY, currentLang);
+  applyLanguage();
+}
+
+/*
+  SEMENTE INICIAL DE PRESETS
+  Edite este objeto para mudar os exemplos que aparecem na primeira abertura.
+  Eles sao copiados uma unica vez para o navegador. Depois disso, o usuario
+  pode editar/remover/exportar/importar a propria lista sem o codigo recria-los.
+*/
+const INITIAL_PRESET_SEED = {
+  "Baen example": {
+    "targetUseGeneral": false,
+      "targetAlt": 8000,
+      "targetPhaseRel": 359.9,
+      "targetAps1": 8000,
+      "targetAps2": 8000,
+      "targetArgAps1": 0,
+      "targetTrueAnom": 0,
+      "chaserUseGeneral": true,
+      "chaserAlt": 1000,
+      "chaserPhase": 0,
+      "chaserAps1": 1000,
+      "chaserAps2": 6500,
+      "chaserArgAps1": 85,
+      "chaserTrueAnom": 0,
+      "tFinalHours": 24,
+      "dt": 10,
+      "timeWarp": 2000,
+      "relMode": "curvilinear",
+      "burns": [
+        {
+          "name": "NC1",
+          "turns": 0,
+          "phaseDeg": 180,
+          "dv_m_s": 565
+        },
+        {
+          "name": "NC2",
+          "turns": 2,
+          "phaseDeg": 180,
+          "dv_m_s": 200
+        },
+        {
+          "name": "NC3",
+          "turns": 3,
+          "phaseDeg": 180,
+          "dv_m_s": 200
+        },
+        {
+          "name": "NC4",
+          "turns": 4,
+          "phaseDeg": 0,
+          "dv_m_s": 80
+        }
+      ]
+  }
+};
+
+let simData = null;
+let animationRunning = false;
+let animationFrameId = null;
+let animationStartWallMs = null;
+let currentAnimIdx = 0;
+let elapsedSimSec = 0;
+
+function deg2rad(d){ return d*Math.PI/180.0; }
+function rad2deg(r){ return r*180.0/Math.PI; }
+function norm(v){ return Math.hypot(v[0], v[1]); }
+function add(a,b){ return [a[0]+b[0], a[1]+b[1]]; }
+function sub(a,b){ return [a[0]-b[0], a[1]-b[1]]; }
+function mul(s,v){ return [s*v[0], s*v[1]]; }
+function dot(a,b){ return a[0]*b[0] + a[1]*b[1]; }
+
+function accel(r){
+  const rn = norm(r);
+  const f = -mu / Math.pow(rn, 3);
+  return [f*r[0], f*r[1]];
+}
+
+function rk4Step(r, v, h){
+  const k1r = v, k1v = accel(r);
+  const k2r = add(v, mul(0.5*h, k1v));
+  const k2v = accel(add(r, mul(0.5*h, k1r)));
+  const k3r = add(v, mul(0.5*h, k2v));
+  const k3v = accel(add(r, mul(0.5*h, k2r)));
+  const k4r = add(v, mul(h, k3v));
+  const k4v = accel(add(r, mul(h, k3r)));
+  const rNew = add(r, mul(h/6, add(add(k1r, mul(2,k2r)), add(mul(2,k3r), k4r))));
+  const vNew = add(v, mul(h/6, add(add(k1v, mul(2,k2v)), add(mul(2,k3v), k4v))));
+  return [rNew, vNew];
+}
+
+function circularState(radius, phaseDeg){
+  const th = deg2rad(phaseDeg);
+  const r = [radius*Math.cos(th), radius*Math.sin(th)];
+  const vmag = Math.sqrt(mu/radius);
+  const v = [-vmag*Math.sin(th), vmag*Math.cos(th)];
+  return [r,v];
+}
+
+function stateFromApsidesAndGeometry(aps1Alt, aps2Alt, argAps1Deg, trueAnomDeg){
+  const rA1 = Re + aps1Alt;
+  const rA2 = Re + aps2Alt;
+
+  let rp, ra, periArgDeg;
+  if(rA2 >= rA1){
+    rp = rA1; ra = rA2; periArgDeg = argAps1Deg;
+  } else {
+    rp = rA2; ra = rA1; periArgDeg = argAps1Deg + 180.0;
+  }
+
+  const a = 0.5*(rp + ra);
+  const e = (ra - rp) / (ra + rp);
+  const f = deg2rad(trueAnomDeg);
+  const p = a * (1 - e*e);
+  const rmag = p / (1 + e*Math.cos(f));
+
+  const theta = deg2rad(periArgDeg) + f;
+  const r = [rmag*Math.cos(theta), rmag*Math.sin(theta)];
+
+  const fac = Math.sqrt(mu / p);
+  const vr = fac * e * Math.sin(f);
+  const vt = fac * (1 + e * Math.cos(f));
+  const ur = [Math.cos(theta), Math.sin(theta)];
+  const ut = [-Math.sin(theta), Math.cos(theta)];
+  const v = add(mul(vr, ur), mul(vt, ut));
+
+  return [r, v];
+}
+
+function orbitalElements(r,v, argAps1RefDeg){
+  const rnorm = norm(r), vnorm = norm(v);
+  const h = r[0]*v[1] - r[1]*v[0];
+  const energy = 0.5*vnorm*vnorm - mu/rnorm;
+  const a = -mu/(2*energy);
+  const evec = [(v[1]*h)/mu - r[0]/rnorm, (-v[0]*h)/mu - r[1]/rnorm];
+  const e = norm(evec);
+  const rp = a*(1-e), ra = a*(1+e);
+  const T = 2*Math.PI*Math.sqrt(a*a*a/mu);
+
+  const ref = deg2rad(argAps1RefDeg);
+  const ur1 = [Math.cos(ref), Math.sin(ref)];
+  const ed = e > 1e-12 ? dot(mul(1/e, evec), ur1) : 1;
+  const rA1 = ed >= 0 ? rp : ra;
+  const rA2 = ed >= 0 ? ra : rp;
+
+  return {a, e, rp, ra, rA1, rA2, T};
+}
+
+function wrap0to360(x){
+  let y = x % 360;
+  if (y < 0) y += 360;
+  return y;
+}
+
+function bindSliderReset(slider, input, valueForSlider=null, valueForInput=null){
+  slider.addEventListener('dblclick', ()=>{
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    const sliderValue = valueForSlider ?? (min <= 0 && max >= 0 ? 0 : min);
+    const inputValue = valueForInput ?? sliderValue;
+    slider.value = sliderValue;
+    input.value = inputValue;
+    slider.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('input'));
+  });
+}
+
+function bindLinear(sliderId, inputId){
+  const s = document.getElementById(sliderId), n = document.getElementById(inputId);
+  s.addEventListener('input', ()=>{ n.value = s.value; });
+  n.addEventListener('input', ()=>{ s.value = n.value; });
+  bindSliderReset(s, n);
+}
+
+function bindLogAltitude(sliderId, inputId){
+  const s = document.getElementById(sliderId), n = document.getElementById(inputId);
+  function sliderToVal(x){ return Math.round(Math.pow(10, parseFloat(x))); }
+  function valToSlider(v){ return Math.log10(parseFloat(v)); }
+  s.addEventListener('input', ()=>{ n.value = sliderToVal(s.value); });
+  n.addEventListener('input', ()=>{ const v = Math.min(10000, Math.max(100, parseFloat(n.value)||100)); s.value = valToSlider(v); });
+  n.addEventListener('change', ()=>{ n.dispatchEvent(new Event('input')); });
+  bindSliderReset(s, n, s.min, sliderToVal(s.min));
+}
+
+function setLinearPair(sliderId, inputId, val){
+  document.getElementById(inputId).value = val;
+  document.getElementById(sliderId).value = val;
+}
+function setLogPair(sliderId, inputId, val){
+  document.getElementById(inputId).value = val;
+  document.getElementById(sliderId).value = Math.log10(val);
+}
+
+function toggleHelp(){
+  document.getElementById('helpBox').classList.toggle('hidden');
+}
+
+function updateOrbitSections(which){
+  const useGeneral = document.getElementById(which + 'UseGeneral').checked;
+  document.getElementById(which + 'SimpleSection').classList.toggle('hidden', useGeneral);
+  document.getElementById(which + 'AdvancedSection').classList.toggle('hidden', !useGeneral);
+}
+
+function collapseAllNCs(exceptCard=null){
+  document.querySelectorAll('.nc-card').forEach(card => {
+    if(card !== exceptCard){
+      card.querySelector('.nc-body').classList.add('collapsed');
+      card.querySelector('.nc-chevron').innerText = '▶';
+    }
+  });
+}
+
+function toggleNC(card){
+  const body = card.querySelector('.nc-body');
+  const chev = card.querySelector('.nc-chevron');
+  const isCollapsed = body.classList.contains('collapsed');
+  if(isCollapsed){
+    collapseAllNCs(card);
+    body.classList.remove('collapsed');
+    chev.innerText = '▼';
+  } else {
+    body.classList.add('collapsed');
+    chev.innerText = '▶';
+  }
+}
+
+function getNCs(){
+  const cards = [...document.querySelectorAll('.nc-card')];
+  return cards.map((card, idx) => ({
+    name: card.dataset.name || `NC${idx+1}`,
+    turns: parseFloat(card.querySelector('.nc-turns').value) || 0,
+    phaseDeg: parseFloat(card.querySelector('.nc-phase').value) || 0,
+    dv_m_s: parseFloat(card.querySelector('.nc-dv').value) || 0
+  })).sort((a,b) => (a.turns*360+a.phaseDeg) - (b.turns*360+b.phaseDeg));
+}
+
+function renumberNCs(){
+  const cards = [...document.querySelectorAll('.nc-card')];
+  cards.forEach((card, idx) => {
+    const name = `NC${idx+1}`;
+    card.dataset.name = name;
+    card.querySelector('.nc-title').innerText = name;
+  });
+}
+
+function addNC(values=null){
+  const container = document.getElementById('ncContainer');
+  const idx = container.children.length + 1;
+  const name = `NC${idx}`;
+  const turns = values?.turns ?? idx;
+  const phase = values?.phaseDeg ?? (idx % 2 === 1 ? 0 : 180);
+  const dv = values?.dv_m_s ?? 0;
+
+  const div = document.createElement('div');
+  div.className = 'nc-card';
+  div.dataset.name = name;
+  div.innerHTML = `
+    <div class="nc-head" onclick="toggleNC(this.closest('.nc-card'))">
+      <div class="nc-title-wrap"><span class="nc-chevron">▶</span><b class="nc-title">${name}</b></div>
+      <button class="mini danger nc-remove-button" onclick="event.stopPropagation(); this.closest('.nc-card').remove(); renumberNCs(); runSimulation();">${t('ncRemoveButton')}</button>
+    </div>
+    <div class="nc-body collapsed">
+      <div class="control">
+        <label class="nc-turns-label">${t('ncTurnsPhase')}</label>
+        <div class="row3">
+          <input type="range" class="nc-turns-slider" min="0" max="20" step="1" value="${turns}">
+          <input type="number" class="nc-turns" min="0" max="20" step="1" value="${turns}">
+          <input type="number" class="nc-phase" min="0" max="360" step="0.1" value="${phase}">
+        </div>
+      </div>
+      <div class="control">
+        <label class="nc-dv-label">${t('ncDvLabel')}</label>
+        <div class="row2">
+          <input type="range" class="nc-dv-slider" min="-600" max="600" step="1" value="${dv}">
+          <input type="number" class="nc-dv" min="-600" max="600" step="1" value="${dv}">
+        </div>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+
+  const turnsSlider = div.querySelector('.nc-turns-slider');
+  const turnsInput = div.querySelector('.nc-turns');
+  const dvSlider = div.querySelector('.nc-dv-slider');
+  const dvInput = div.querySelector('.nc-dv');
+
+  turnsSlider.addEventListener('input', ()=>{ turnsInput.value = turnsSlider.value; });
+  turnsInput.addEventListener('input', ()=>{ turnsSlider.value = turnsInput.value; });
+  dvSlider.addEventListener('input', ()=>{ dvInput.value = dvSlider.value; });
+  dvInput.addEventListener('input', ()=>{ dvSlider.value = dvInput.value; });
+  bindSliderReset(turnsSlider, turnsInput);
+  bindSliderReset(dvSlider, dvInput);
+
+  renumberNCs();
+  collapseAllNCs(div);
+  toggleNC(div);
+}
+
+function setNCs(ncs){
+  const container = document.getElementById('ncContainer');
+  container.innerHTML = '';
+  (ncs || []).forEach(nc => addNC(nc));
+  renumberNCs();
+}
+
+function getParams(){
+  return {
+    targetUseGeneral: document.getElementById('targetUseGeneral').checked,
+    targetAlt: parseFloat(document.getElementById('targetAlt').value),
+    targetPhaseRel: parseFloat(document.getElementById('targetPhaseRel').value),
+    targetAps1: parseFloat(document.getElementById('targetAps1').value),
+    targetAps2: parseFloat(document.getElementById('targetAps2').value),
+    targetArgAps1: parseFloat(document.getElementById('targetArgAps1').value),
+    targetTrueAnom: parseFloat(document.getElementById('targetTrueAnom').value),
+
+    chaserUseGeneral: document.getElementById('chaserUseGeneral').checked,
+    chaserAlt: parseFloat(document.getElementById('chaserAlt').value),
+    chaserPhase: parseFloat(document.getElementById('chaserPhase').value),
+    chaserAps1: parseFloat(document.getElementById('chaserAps1').value),
+    chaserAps2: parseFloat(document.getElementById('chaserAps2').value),
+    chaserArgAps1: parseFloat(document.getElementById('chaserArgAps1').value),
+    chaserTrueAnom: parseFloat(document.getElementById('chaserTrueAnom').value),
+
+    tFinalHours: parseFloat(document.getElementById('tFinalHours').value),
+    dt: parseFloat(document.getElementById('dt').value),
+    timeWarp: parseFloat(document.getElementById('timeWarp').value),
+    relMode: document.getElementById('relMode').value,
+    burns: getNCs()
+  };
+}
+
+function setParams(params){
+  document.getElementById('targetUseGeneral').checked = !!params.targetUseGeneral;
+  document.getElementById('chaserUseGeneral').checked = !!params.chaserUseGeneral;
+
+  setLogPair('targetAltSlider','targetAlt', params.targetAlt ?? 420);
+  setLinearPair('targetPhaseRelSlider','targetPhaseRel', params.targetPhaseRel ?? 70);
+  setLinearPair('targetAps1Slider','targetAps1', params.targetAps1 ?? 420);
+  setLinearPair('targetAps2Slider','targetAps2', params.targetAps2 ?? 420);
+  setLinearPair('targetArgAps1Slider','targetArgAps1', params.targetArgAps1 ?? 0);
+  setLinearPair('targetTrueAnomSlider','targetTrueAnom', params.targetTrueAnom ?? 0);
+
+  setLogPair('chaserAltSlider','chaserAlt', params.chaserAlt ?? 220);
+  setLinearPair('chaserPhaseSlider','chaserPhase', params.chaserPhase ?? 0);
+  setLinearPair('chaserAps1Slider','chaserAps1', params.chaserAps1 ?? 220);
+  setLinearPair('chaserAps2Slider','chaserAps2', params.chaserAps2 ?? 260);
+  setLinearPair('chaserArgAps1Slider','chaserArgAps1', params.chaserArgAps1 ?? 0);
+  setLinearPair('chaserTrueAnomSlider','chaserTrueAnom', params.chaserTrueAnom ?? 0);
+
+  setLinearPair('tFinalHoursSlider','tFinalHours', params.tFinalHours ?? 8);
+  setLinearPair('dtSlider','dt', params.dt ?? 5);
+  setLinearPair('timeWarpSlider','timeWarp', params.timeWarp ?? 1200);
+  document.getElementById('relMode').value = params.relMode ?? 'curvilinear';
+
+  updateOrbitSections('target');
+  updateOrbitSections('chaser');
+  setNCs(params.burns ?? []);
+}
+
+function initialStateFromParams(params){
+  let rC, vC, chaserAps1Arg;
+  if(params.chaserUseGeneral){
+    [rC, vC] = stateFromApsidesAndGeometry(params.chaserAps1, params.chaserAps2, params.chaserArgAps1, params.chaserTrueAnom);
+    chaserAps1Arg = params.chaserArgAps1;
+  } else {
+    [rC, vC] = circularState(Re + params.chaserAlt, params.chaserPhase);
+    chaserAps1Arg = params.chaserPhase;
+  }
+
+  let rT, vT, targetAps1Arg;
+  if(params.targetUseGeneral){
+    [rT, vT] = stateFromApsidesAndGeometry(params.targetAps1, params.targetAps2, params.targetArgAps1, params.targetTrueAnom);
+    targetAps1Arg = params.targetArgAps1;
+  } else {
+    const chaserAngle = rad2deg(Math.atan2(rC[1], rC[0]));
+    const targetAbsPhase = chaserAngle + params.targetPhaseRel;
+    [rT, vT] = circularState(Re + params.targetAlt, targetAbsPhase);
+    targetAps1Arg = targetAbsPhase;
+  }
+
+  return {rT, vT, rC, vC, targetAps1Arg, chaserAps1Arg};
+}
+
+function simulate(params){
+  const init = initialStateFromParams(params);
+  let rT = init.rT.slice(), vT = init.vT.slice();
+  let rC = init.rC.slice(), vC = init.vC.slice();
+
+  const times = [];
+  const targetX = [], targetY = [], chaserX = [], chaserY = [];
+  const relV = [], relR = [];
+  const burnsApplied = [], markers = [];
+  const steps = Math.floor(params.tFinalHours*3600 / params.dt) + 1;
+  const burns = params.burns.map(b => ({...b, triggerDeg: 360*b.turns + b.phaseDeg, done:false}));
+
+  let prevChaserUnwrappedDeg = 0.0;
+  let prevDeltaTheta = null;
+
+  for(let i=0;i<steps;i++){
+    const t = i*params.dt;
+    times.push(t);
+    targetX.push(rT[0]); targetY.push(rT[1]);
+    chaserX.push(rC[0]); chaserY.push(rC[1]);
+
+    const er = mul(1/norm(rT), rT);
+    const ev = mul(1/norm(vT), vT);
+    const dr = sub(rC, rT);
+
+    let xRel, yRel;
+    if(params.relMode === 'lvlh'){
+      xRel = dot(dr, ev);
+      yRel = -dot(dr, er);
+    } else {
+      const thT = Math.atan2(rT[1], rT[0]);
+      const thC = Math.atan2(rC[1], rC[0]);
+      if(prevDeltaTheta === null){
+        let targetAhead = thT - thC;
+        while(targetAhead < 0) targetAhead += 2*Math.PI;
+        while(targetAhead >= 2*Math.PI) targetAhead -= 2*Math.PI;
+        prevDeltaTheta = -targetAhead;
+      } else {
+        const prevThC = Math.atan2(chaserY[chaserY.length-2], chaserX[chaserX.length-2]);
+        const prevThT = Math.atan2(targetY[targetY.length-2], targetX[targetX.length-2]);
+        let dC = thC - prevThC;
+        let dT = thT - prevThT;
+        while(dC > Math.PI) dC -= 2*Math.PI;
+        while(dC < -Math.PI) dC += 2*Math.PI;
+        while(dT > Math.PI) dT -= 2*Math.PI;
+        while(dT < -Math.PI) dT += 2*Math.PI;
+        prevDeltaTheta += (dC - dT);
+      }
+      xRel = norm(rT) * prevDeltaTheta;
+      yRel = norm(rT) - norm(rC);
+    }
+    relV.push(xRel); relR.push(yRel);
+
+    const chaserAngleDeg = wrap0to360(rad2deg(Math.atan2(rC[1], rC[0])) - init.chaserAps1Arg);
+    let chaserUnwrappedDeg = chaserAngleDeg;
+    while(chaserUnwrappedDeg + 180 < prevChaserUnwrappedDeg) chaserUnwrappedDeg += 360;
+    while(chaserUnwrappedDeg - 180 > prevChaserUnwrappedDeg) chaserUnwrappedDeg -= 360;
+    if(i===0) chaserUnwrappedDeg = chaserAngleDeg;
+
+    for(const burn of burns){
+      if(!burn.done && prevChaserUnwrappedDeg <= burn.triggerDeg && chaserUnwrappedDeg >= burn.triggerDeg){
+        const vtHat = mul(1/norm(vC), vC);
+        const dv = mul(burn.dv_m_s/1000.0, vtHat);
+        vC = add(vC, dv);
+        const oe = orbitalElements(rC, vC, init.chaserAps1Arg);
+        burnsApplied.push({
+          name:burn.name,
+          t_s:t,
+          event:t('burnEvent', {turns: burn.turns, phase: burn.phaseDeg.toFixed(1)}),
+          dv_m_s:burn.dv_m_s,
+          a_km:oe.a,
+          e:oe.e,
+          a1_alt_km:oe.rA1 - Re,
+          a2_alt_km:oe.rA2 - Re,
+          T_hr:oe.T/3600.0
+        });
+        markers.push({name:burn.name, idx:i, x:rC[0], y:rC[1], rv:xRel, rr:yRel});
+        burn.done = true;
+      }
+    }
+    prevChaserUnwrappedDeg = chaserUnwrappedDeg;
+
+    if(i < steps-1){
+      [rT, vT] = rk4Step(rT, vT, params.dt);
+      [rC, vC] = rk4Step(rC, vC, params.dt);
+    }
+  }
+
+  const targetOE = orbitalElements(init.rT, init.vT, init.targetAps1Arg);
+  const chaserOE = orbitalElements(init.rC, init.vC, init.chaserAps1Arg);
+
+  return {
+    params,
+    times, targetX, targetY, chaserX, chaserY, relV, relR, burnsApplied, markers,
+    targetOE: {...targetOE, T_hr: targetOE.T/3600.0},
+    chaserInitial: {...chaserOE, T_hr: chaserOE.T/3600.0},
+    targetAps1Arg: init.targetAps1Arg,
+    chaserAps1Arg: init.chaserAps1Arg
+  };
+}
+
+function updateSummaryTable(data){
+  const tbody = document.querySelector('#summaryTable tbody');
+  tbody.innerHTML = '';
+
+  const rows = [
+    {name:t('targetInitial'), a:data.targetOE.a, e:data.targetOE.e, a1:data.targetOE.rA1-Re, a2:data.targetOE.rA2-Re, T_hr:data.targetOE.T_hr, rel_h:'—', mission_h:0},
+    {name:t('chaserInitial'), a:data.chaserInitial.a, e:data.chaserInitial.e, a1:data.chaserInitial.rA1-Re, a2:data.chaserInitial.rA2-Re, T_hr:data.chaserInitial.T_hr, rel_h:0, mission_h:0}
+  ];
+
+  let prevEventTime_h = 0;
+  for(const b of data.burnsApplied){
+    const mission_h = b.t_s/3600.0;
+    const rel_h = mission_h - prevEventTime_h;
+    rows.push({
+      name:`${b.name} (${b.event}; Δv=${b.dv_m_s} m/s)`,
+      a:b.a_km, e:b.e, a1:b.a1_alt_km, a2:b.a2_alt_km, T_hr:b.T_hr, rel_h:rel_h, mission_h:mission_h
+    });
+    prevEventTime_h = mission_h;
+  }
+
+  for(const row of rows){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.name}</td>
+      <td>${row.a.toFixed(3)}</td>
+      <td>${row.e.toFixed(6)}</td>
+      <td>${row.a1.toFixed(3)}</td>
+      <td>${row.a2.toFixed(3)}</td>
+      <td>${row.T_hr.toFixed(4)}</td>
+      <td>${typeof row.rel_h === 'number' ? row.rel_h.toFixed(4) : row.rel_h}</td>
+      <td>${row.mission_h.toFixed(4)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function interpolateColor(t){
+  const c1 = [0, 0, 0];
+  const c2 = [20, 100, 255];
+  const r = Math.round(c1[0] + t*(c2[0]-c1[0]));
+  const g = Math.round(c1[1] + t*(c2[1]-c1[1]));
+  const b = Math.round(c1[2] + t*(c2[2]-c1[2]));
+  return `rgb(${r},${g},${b})`;
+}
+
+function buildGradientLineTraces(xs, ys, name){
+  const traces = [];
+  const n = xs.length;
+  if(n < 2) return traces;
+  const segments = Math.min(140, n-1);
+  for(let s=0; s<segments; s++){
+    const i0 = Math.floor((s/segments)*(n-1));
+    const i1 = Math.max(i0+1, Math.floor(((s+1)/segments)*(n-1)));
+    const xseg = xs.slice(i0, i1+1);
+    const yseg = ys.slice(i0, i1+1);
+    traces.push({
+      x:xseg, y:yseg, mode:'lines',
+      line:{color:interpolateColor(s/(segments-1 || 1)), width:2},
+      name:name,
+      showlegend:s===0,
+      hoverinfo:'skip'
+    });
+  }
+  return traces;
+}
+
+function plotData(data, animIdx=null){
+  if(animIdx !== null){
+    animIdx = Math.max(0, Math.min(data.times.length - 1, Math.floor(animIdx) || 0));
+  }
+
+  const theta = Array.from({length:361}, (_,i)=>i*Math.PI/180.0);
+  const earthX = theta.map(t=>Re*Math.cos(t));
+  const earthY = theta.map(t=>Re*Math.sin(t));
+  const maxAbs = Math.max(...data.targetX.map(Math.abs), ...data.targetY.map(Math.abs), ...data.chaserX.map(Math.abs), ...data.chaserY.map(Math.abs)) * 1.08;
+
+  const inertialTraces = [
+    {x:earthX, y:earthY, mode:'lines', line:{color:'rgba(90,140,210,1)'}, fill:'toself', fillcolor:'rgba(160,210,255,0.65)', name:t('earth'), hoverinfo:'skip'},
+    {x:data.targetX, y:data.targetY, mode:'lines', name:'Target', line:{width:2}},
+    ...buildGradientLineTraces(data.chaserX, data.chaserY, t('chaserGradient'))
+  ];
+
+  if(data.params.chaserUseGeneral){
+    const lon = deg2rad(data.chaserAps1Arg);
+    inertialTraces.push(
+      {x:[-maxAbs*Math.cos(lon), maxAbs*Math.cos(lon)], y:[-maxAbs*Math.sin(lon), maxAbs*Math.sin(lon)], mode:'lines', name:t('chaserApsAxis'), line:{dash:'dash', width:1}},
+      {x:[(Re+Math.max(0,data.params.chaserAps1))*Math.cos(lon)], y:[(Re+Math.max(0,data.params.chaserAps1))*Math.sin(lon)], mode:'markers', name:t('chaserAps1'), marker:{size:8}},
+      {x:[-(Re+Math.max(0,data.params.chaserAps2))*Math.cos(lon)], y:[-(Re+Math.max(0,data.params.chaserAps2))*Math.sin(lon)], mode:'markers', name:t('chaserAps2'), marker:{size:8}}
+    );
+  }
+
+  if(data.markers.length>0){
+    inertialTraces.push({x:data.markers.map(m=>m.x), y:data.markers.map(m=>m.y), mode:'markers+text', name:'NCs', text:data.markers.map(m=>m.name), textposition:'top center', marker:{symbol:'x', size:10}});
+  }
+  if(animIdx!==null){
+    inertialTraces.push({x:[data.targetX[animIdx]], y:[data.targetY[animIdx]], mode:'markers', name:t('targetNow'), marker:{size:10}});
+    inertialTraces.push({x:[data.chaserX[animIdx]], y:[data.chaserY[animIdx]], mode:'markers', name:t('chaserNow'), marker:{size:10}});
+  }
+
+  Plotly.newPlot('inertialPlot', inertialTraces, {
+    title:t('inertialTitle'),
+    xaxis:{title:'x (km)', range:[-maxAbs,maxAbs]},
+    yaxis:{title:'y (km)', scaleanchor:'x', scaleratio:1, range:[-maxAbs,maxAbs]},
+    margin:{l:60,r:20,t:45,b:55},
+    showlegend:true
+  }, {responsive:true});
+
+  const relativeTitle = data.params.relMode === 'lvlh' ? t('relativeTitleLvlh') : t('relativeTitleCurvilinear');
+  const relativeTraces = [
+    {x:data.relV, y:data.relR, mode:'lines', name:t('relativeTrajectory')},
+    {x:[data.relV[0]], y:[data.relR[0]], mode:'markers', name:'Start'},
+    {x:[0], y:[0], mode:'markers', name:'Target', marker:{symbol:'star', size:12}}
+  ];
+  if(data.markers.length>0){
+    relativeTraces.push({x:data.markers.map(m=>m.rv), y:data.markers.map(m=>m.rr), mode:'markers+text', name:'NCs', text:data.markers.map(m=>m.name), textposition:'bottom right', marker:{symbol:'x', size:10}});
+  }
+  if(animIdx!==null){
+    relativeTraces.push({x:[data.relV[animIdx]], y:[data.relR[animIdx]], mode:'markers', name:t('chaserNow'), marker:{size:10}});
+  }
+
+  const xMin = Math.min(...data.relV, 0), xMax = Math.max(...data.relV, 0);
+  const yMin = Math.min(...data.relR, 0), yMax = Math.max(...data.relR, 0);
+  const xPad = Math.max(1, Math.abs(xMax-xMin)*0.05);
+  const yPad = Math.max(1, Math.abs(yMax-yMin)*0.05);
+
+  Plotly.newPlot('relativePlot', relativeTraces, {
+    title:relativeTitle,
+    xaxis:{title:'V-bar / along-track (km)', autorange:'reversed', range:[xMax+xPad, xMin-xPad]},
+    yaxis:{title:`R-bar / radial (km) [${t('positiveDown')}]`, autorange:'reversed', range:[yMax+yPad, yMin-yPad]},
+    margin:{l:70,r:20,t:45,b:55},
+    showlegend:true
+  }, {responsive:true});
+
+  updateSummaryTable(data);
+}
+
+function safePlotIndexFromElapsed(simSec){
+  if(!simData || !simData.times || simData.times.length === 0) return 0;
+  const duration = simData.times[simData.times.length - 1];
+  if(!Number.isFinite(simSec)) simSec = 0;
+  if(duration <= 0) return 0;
+  simSec = simSec % duration;
+  if(simSec < 0) simSec += duration;
+  const rawIdx = Math.floor(simSec / simData.params.dt);
+  return Math.max(0, Math.min(simData.times.length - 1, rawIdx));
+}
+
+function renderAnimationFrame(nowMs){
+  if(!animationRunning || !simData) return;
+  if(animationStartWallMs === null) animationStartWallMs = nowMs;
+
+  const elapsedRealSec = (nowMs - animationStartWallMs) / 1000.0;
+  const warp = Math.max(1, Number.isFinite(simData.params.timeWarp) ? simData.params.timeWarp : 1);
+  elapsedSimSec = elapsedRealSec * warp;
+
+  currentAnimIdx = safePlotIndexFromElapsed(elapsedSimSec);
+  plotData(simData, currentAnimIdx);
+
+  const tNow = simData.times[currentAnimIdx] || 0;
+  setStatus('animationStatus', {seconds: tNow.toFixed(0), hours: (tNow/3600).toFixed(2), warp});
+
+  animationFrameId = requestAnimationFrame(renderAnimationFrame);
+}
+
+function runSimulation(){
+  pauseAnimation(false);
+  try {
+    const params = getParams();
+    simData = simulate(params);
+    currentAnimIdx = 0;
+    elapsedSimSec = 0;
+    plotData(simData, currentAnimIdx);
+    setStatus('simulationUpdated', {steps: simData.times.length, duration: params.tFinalHours, dt: params.dt});
+  } catch(err){
+    document.getElementById('status').innerText = t('errorPrefix') + err.message;
+    console.error(err);
+  }
+}
+
+function playAnimation(){
+  if(!simData) runSimulation();
+  pauseAnimation(false);
+  animationRunning = true;
+  updatePlayPauseText();
+  const warp = Math.max(1, Number.isFinite(simData.params.timeWarp) ? simData.params.timeWarp : 1);
+  elapsedSimSec = currentAnimIdx * simData.params.dt;
+  animationStartWallMs = performance.now() - (elapsedSimSec / warp) * 1000.0;
+  animationFrameId = requestAnimationFrame(renderAnimationFrame);
+}
+
+function pauseAnimation(updateText=true){
+  animationRunning = false;
+  updatePlayPauseText();
+  if(animationFrameId !== null){ cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+  if(simData){
+    currentAnimIdx = Math.max(0, Math.min(simData.times.length - 1, currentAnimIdx || 0));
+    elapsedSimSec = currentAnimIdx * simData.params.dt;
+    plotData(simData, currentAnimIdx);
+    if(updateText){
+      const tNow = simData.times[currentAnimIdx] || 0;
+      setStatus('pausedAt', {seconds: tNow.toFixed(0), hours: (tNow/3600).toFixed(2)});
+    }
+  }
+}
+
+function togglePlayPause(){
+  if(animationRunning) pauseAnimation(true);
+  else playAnimation();
+}
+
+function resetAnimation(){
+  pauseAnimation(false);
+  currentAnimIdx = 0;
+  elapsedSimSec = 0;
+  if(simData){
+    plotData(simData, currentAnimIdx);
+    setStatus('animationReset');
+  }
+}
+
+function getLocalPresets(){
+  try { return JSON.parse(localStorage.getItem(LOCAL_PRESET_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function setLocalPresets(presets){
+  localStorage.setItem(LOCAL_PRESET_KEY, JSON.stringify(presets));
+  refreshPresetList();
+}
+
+function normalizePresetPayload(data){
+  if(!data || typeof data !== 'object') return {};
+  if(data.presets && typeof data.presets === 'object') return data.presets;
+  if(data.name && data.params) return {[data.name]: data.params};
+  return data;
+}
+
+function seedInitialPresetsOnce(){
+  if(localStorage.getItem(LOCAL_PRESET_KEY)){
+    refreshPresetList();
+    return;
+  }
+
+  const seed = normalizePresetPayload(INITIAL_PRESET_SEED);
+  localStorage.setItem(LOCAL_PRESET_KEY, JSON.stringify(seed));
+  refreshPresetList();
+  const count = Object.keys(seed).length;
+  setStatus('seedLoaded', {count});
+}
+
+function refreshPresetList(){
+  const select = document.getElementById('presetSelect');
+  const selected = select.value;
+  const presets = getLocalPresets();
+  const names = Object.keys(presets).sort((a,b)=>a.localeCompare(b));
+  select.innerHTML = '';
+  const emptyOpt = document.createElement('option');
+  emptyOpt.value = '';
+  emptyOpt.innerText = t('initialPresetOption');
+  select.appendChild(emptyOpt);
+  if(names.length === 0){
+    return;
+  }
+  for(const name of names){
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.innerText = name;
+    select.appendChild(opt);
+  }
+  select.value = names.includes(selected) ? selected : '';
+}
+
+function savePreset(){
+  const name = prompt(t('presetNamePrompt'));
+  if(!name || !name.trim()) return;
+  const locals = getLocalPresets();
+  locals[name.trim()] = getParams();
+  setLocalPresets(locals);
+  document.getElementById('presetSelect').value = name.trim();
+  setStatus('presetSaved', {name: name.trim()});
+}
+
+function loadSelectedPreset(){
+  const name = document.getElementById('presetSelect').value;
+  if(!name){
+    setParams(getInitialParams());
+    runSimulation();
+    setStatus('initialConfigLoaded');
+    return;
+  }
+  const presets = getLocalPresets();
+  if(!presets[name]) return;
+  setParams(presets[name]);
+  runSimulation();
+  setStatus('presetLoaded', {name});
+}
+
+function removePreset(){
+  const name = document.getElementById('presetSelect').value;
+  if(!name) return;
+  const locals = getLocalPresets();
+  delete locals[name];
+  setLocalPresets(locals);
+  setStatus('presetRemoved', {name});
+}
+
+function exportPresetList(){
+  const payload = {version: 1, presets: getLocalPresets()};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rendezvous_presets.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function importPresetFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const locals = getLocalPresets();
+      const imported = normalizePresetPayload(data);
+      for(const [k,v] of Object.entries(imported)){
+        if(v && typeof v === 'object') locals[k] = v;
+      }
+      setLocalPresets(locals);
+      setStatus('importSuccess');
+    } catch(err){
+      setStatus('importFailure');
+      console.error(err);
+    } finally {
+      event.target.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function getInitialParams(){
+  return {
+    targetUseGeneral: false,
+    targetAlt: 420,
+    targetPhaseRel: 70,
+    targetAps1: 420,
+    targetAps2: 420,
+    targetArgAps1: 0,
+    targetTrueAnom: 0,
+
+    chaserUseGeneral: true,
+    chaserAlt: 220,
+    chaserPhase: 0,
+    chaserAps1: 220,
+    chaserAps2: 260,
+    chaserArgAps1: 0,
+    chaserTrueAnom: 0,
+
+    tFinalHours: 8,
+    dt: 5,
+    timeWarp: 1200,
+    relMode: 'curvilinear',
+    burns: []
+  };
+}
+
+function initControls(){
+  bindLogAltitude('targetAltSlider','targetAlt');
+  bindLinear('targetPhaseRelSlider','targetPhaseRel');
+  bindLinear('targetAps1Slider','targetAps1');
+  bindLinear('targetAps2Slider','targetAps2');
+  bindLinear('targetArgAps1Slider','targetArgAps1');
+  bindLinear('targetTrueAnomSlider','targetTrueAnom');
+
+  bindLogAltitude('chaserAltSlider','chaserAlt');
+  bindLinear('chaserPhaseSlider','chaserPhase');
+  bindLinear('chaserAps1Slider','chaserAps1');
+  bindLinear('chaserAps2Slider','chaserAps2');
+  bindLinear('chaserArgAps1Slider','chaserArgAps1');
+  bindLinear('chaserTrueAnomSlider','chaserTrueAnom');
+
+  bindLinear('tFinalHoursSlider','tFinalHours');
+  bindLinear('dtSlider','dt');
+  bindLinear('timeWarpSlider','timeWarp');
+
+  setParams(getInitialParams());
+
+  refreshPresetList();
+}
+
+window.onload = ()=>{
+  initControls();
+  seedInitialPresetsOnce();
+  applyLanguage();
+  runSimulation();
+};
+</script>
+</body>
+</html>
