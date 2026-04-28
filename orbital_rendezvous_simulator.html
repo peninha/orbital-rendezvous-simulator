@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulador 2D de Rendezvous Orbital</title>
+  <title>Simulador de Rendezvous Orbital</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 18px; line-height: 1.35; background: #fafafa; color: #222; }
@@ -13,8 +13,10 @@
     .topbar { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; margin-bottom: 14px; }
     .toptools { display: flex; gap: 12px; align-items: start; flex-wrap: wrap; justify-content: flex-end; }
     .lang-switch { display: flex; gap: 6px; align-items: center; }
-    .lang-button { padding: 6px 10px; min-width: 64px; }
-    .lang-button.active { background: #eef5ff; border-color: #557; font-weight: 700; }
+    .lang-button { width: 38px; height: 28px; padding: 0; line-height: 1; border: 0; background: transparent; border-radius: 3px; }
+    .lang-button:hover { background: transparent; }
+    .lang-button:focus-visible, .lang-button.active { outline: 2px solid #557; outline-offset: 2px; }
+    .flag-icon { display: block; width: 30px; height: 20px; margin: 0 auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.18); }
     .top-right-card { padding: 12px; border: 1px solid #ddd; background: white; border-radius: 8px; min-width: 620px; }
     .preset-row-top { display: grid; grid-template-columns: 1fr auto auto auto auto auto; gap: 8px; align-items: center; }
     .helpbox { padding: 14px; border: 1px solid #ddd; background: white; border-radius: 8px; margin-bottom: 14px; }
@@ -74,13 +76,28 @@
 <body>
     <div class="topbar">
     <div>
-      <h1 data-i18n="appTitle">Simulador 2D de Rendezvous Orbital</h1>
-      <div class="version" data-i18n="versionLabel">Versão 8.1</div>
+      <h1 data-i18n="appTitle">Simulador de Rendezvous Orbital</h1>
+      <div class="version" data-i18n="versionLabel">Versão 1.0</div>
     </div>
     <div class="toptools">
       <div class="lang-switch" aria-label="Language">
-        <button id="langPt" class="lang-button" onclick="setLanguage('pt')" title="Português">🇧🇷 PT</button>
-        <button id="langEn" class="lang-button" onclick="setLanguage('en')" title="English">🇺🇸 EN</button>
+        <button id="langPt" class="lang-button" onclick="setLanguage('pt')" title="Português" aria-label="Português">
+          <svg class="flag-icon" viewBox="0 0 30 20" aria-hidden="true" focusable="false">
+            <rect width="30" height="20" fill="#009b3a"></rect>
+            <path d="M15 2.2 27 10 15 17.8 3 10z" fill="#ffdf00"></path>
+            <circle cx="15" cy="10" r="4.4" fill="#002776"></circle>
+            <path d="M10.8 8.8c2.8-.4 5.6.1 8.4 1.6" fill="none" stroke="#fff" stroke-width=".7"></path>
+          </svg>
+        </button>
+        <button id="langEn" class="lang-button" onclick="setLanguage('en')" title="English" aria-label="English">
+          <svg class="flag-icon" viewBox="0 0 30 20" aria-hidden="true" focusable="false">
+            <rect width="30" height="20" fill="#012169"></rect>
+            <path d="M0 0 30 20M30 0 0 20" stroke="#fff" stroke-width="4"></path>
+            <path d="M0 0 30 20M30 0 0 20" stroke="#c8102e" stroke-width="2"></path>
+            <path d="M15 0v20M0 10h30" stroke="#fff" stroke-width="7"></path>
+            <path d="M15 0v20M0 10h30" stroke="#c8102e" stroke-width="4"></path>
+          </svg>
+        </button>
       </div>
       <button data-i18n="helpButton" onclick="toggleHelp()">Help / Info</button>
       <div class="top-right-card">
@@ -109,8 +126,8 @@
     <ul>
       <li data-i18n-html="helpInitialPreset">Use <b>Configura??o inicial (sem preset)</b> e clique em <b>Carregar</b> para voltar aos par?metros iniciais.</li>
       <li data-i18n="helpPresets">Presets salvos, importados ou criados ficam no navegador. Voc? pode remov?-los um por um e exportar a lista completa em JSON.</li>
-      <li data-i18n-html="helpOrbits">Em <b>?rbita inicial do Target</b> e <b>?rbita inicial do Chaser</b>, o modo simples usa ?rbita circular. Para ?rbitas el?pticas, marque <b>Usar ?rbita geral</b>.</li>
-      <li data-i18n-html="helpBurns">As queimas <b>NC</b> s?o disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como refer?ncia a dire??o da <b>Apside 1 do Chaser</b>.</li>
+      <li data-i18n-html="helpOrbits">Em <b>?rbita inicial do Target</b> e <b>?rbita inicial do Chaser</b>, marque <b>?rbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.</li>
+      <li data-i18n-html="helpBurns">As queimas <b>NC</b> s?o disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como refer?ncia a dire??o do <b>perigeu do Chaser</b>.</li>
       <li data-i18n="helpSliders">D? duplo clique em qualquer slider para retornar ao zero. Quando o slider n?o permite zero, ele volta ao menor valor permitido.</li>
       <li data-i18n-html="helpGradient">No gr?fico inercial, a trajet?ria do Chaser usa um gradiente <b>preto ? azul</b> para indicar in?cio ? fim.</li>
     </ul>
@@ -121,12 +138,12 @@
         <h3>Órbita inicial do Target</h3>
         <div class="rowCheck">
           <input type="checkbox" id="targetUseGeneral" onchange="updateOrbitSections('target')">
-          <label for="targetUseGeneral" style="font-weight:600;">Usar órbita geral</label>
+          <label for="targetUseGeneral" style="font-weight:600;">Órbita circular</label>
         </div>
 
         <div id="targetSimpleSection">
           <div class="control">
-            <label data-i18n="targetAltLabel">Altitude do Target (km)</label>
+            <label data-i18n="targetAltLabel">Altitude da órbita do Target (km)</label>
             <div class="row2">
               <input type="range" id="targetAltSlider" min="2" max="4" step="0.001">
               <input type="number" id="targetAlt" min="100" max="10000" step="1">
@@ -134,7 +151,7 @@
             <div class="small">Slider logarítmico: 100 km até 10.000 km.</div>
           </div>
           <div class="control">
-            <label data-i18n="targetPhaseRelLabel">Fase inicial do Target relativa ao Chaser (graus)</label>
+            <label data-i18n="targetPhaseRelLabel">Longitude verdadeira inicial do Target (graus, a partir do Leste)</label>
             <div class="row2">
               <input type="range" id="targetPhaseRelSlider" min="0" max="360" step="0.1">
               <input type="number" id="targetPhaseRel" min="0" max="360" step="0.1">
@@ -144,28 +161,28 @@
 
         <div id="targetAdvancedSection" class="orbit-advanced hidden">
           <div class="control">
-            <label data-i18n="targetAps1Label">Apside 1 do Target (km)</label>
+            <label data-i18n="targetAps1Label">Altitude do perigeu do Target (km)</label>
             <div class="row2">
               <input type="range" id="targetAps1Slider" min="100" max="10000" step="1">
               <input type="number" id="targetAps1" min="100" max="10000" step="1">
             </div>
           </div>
           <div class="control">
-            <label data-i18n="targetAps2Label">Apside 2 do Target (km)</label>
+            <label data-i18n="targetAps2Label">Altitude do apogeu do Target (km)</label>
             <div class="row2">
               <input type="range" id="targetAps2Slider" min="100" max="10000" step="1">
               <input type="number" id="targetAps2" min="100" max="10000" step="1">
             </div>
           </div>
           <div class="control">
-            <label data-i18n="targetArgAps1Label">Argumento da Apside 1 do Target (graus)</label>
+            <label data-i18n="targetArgAps1Label">Argumento do perigeu do Target (graus)</label>
             <div class="row2">
               <input type="range" id="targetArgAps1Slider" min="-180" max="180" step="0.1">
               <input type="number" id="targetArgAps1" min="-180" max="180" step="0.1">
             </div>
           </div>
           <div class="control">
-            <label data-i18n="targetTrueAnomLabel">Anomalia verdadeira inicial do Target (graus, a partir do periastro)</label>
+            <label data-i18n="targetTrueAnomLabel">Anomalia verdadeira inicial do Target (graus, a partir do perigeu)</label>
             <div class="row2">
               <input type="range" id="targetTrueAnomSlider" min="0" max="360" step="0.1">
               <input type="number" id="targetTrueAnom" min="0" max="360" step="0.1">
@@ -181,12 +198,12 @@
       <h3>Órbita inicial do Chaser</h3>
       <div class="rowCheck">
         <input type="checkbox" id="chaserUseGeneral" onchange="updateOrbitSections('chaser')">
-        <label for="chaserUseGeneral" style="font-weight:600;">Usar órbita geral</label>
+        <label for="chaserUseGeneral" style="font-weight:600;">Órbita circular</label>
       </div>
 
       <div id="chaserSimpleSection">
         <div class="control">
-          <label data-i18n="chaserAltLabel">Altitude do Chaser (km)</label>
+          <label data-i18n="chaserAltLabel">Altitude da órbita do Chaser (km)</label>
           <div class="row2">
             <input type="range" id="chaserAltSlider" min="2" max="4" step="0.001">
             <input type="number" id="chaserAlt" min="100" max="10000" step="1">
@@ -194,7 +211,7 @@
           <div class="small">Slider logarítmico: 100 km até 10.000 km.</div>
         </div>
         <div class="control">
-          <label data-i18n="chaserPhaseLabel">Fase inicial do Chaser (graus)</label>
+          <label data-i18n="chaserPhaseLabel">Longitude verdadeira inicial do Chaser (graus, a partir do Leste)</label>
           <div class="row2">
             <input type="range" id="chaserPhaseSlider" min="0" max="360" step="0.1">
             <input type="number" id="chaserPhase" min="0" max="360" step="0.1">
@@ -204,28 +221,28 @@
 
       <div id="chaserAdvancedSection" class="orbit-advanced hidden">
         <div class="control">
-          <label data-i18n="chaserAps1Label">Apside 1 do Chaser (km)</label>
+          <label data-i18n="chaserAps1Label">Altitude do perigeu do Chaser (km)</label>
           <div class="row2">
             <input type="range" id="chaserAps1Slider" min="100" max="10000" step="1">
             <input type="number" id="chaserAps1" min="100" max="10000" step="1">
           </div>
         </div>
         <div class="control">
-          <label data-i18n="chaserAps2Label">Apside 2 do Chaser (km)</label>
+          <label data-i18n="chaserAps2Label">Altitude do apogeu do Chaser (km)</label>
           <div class="row2">
             <input type="range" id="chaserAps2Slider" min="100" max="10000" step="1">
             <input type="number" id="chaserAps2" min="100" max="10000" step="1">
           </div>
         </div>
         <div class="control">
-          <label data-i18n="chaserArgAps1Label">Argumento da Apside 1 do Chaser (graus)</label>
+          <label data-i18n="chaserArgAps1Label">Argumento do perigeu do Chaser (graus)</label>
           <div class="row2">
             <input type="range" id="chaserArgAps1Slider" min="-180" max="180" step="0.1">
             <input type="number" id="chaserArgAps1" min="-180" max="180" step="0.1">
           </div>
         </div>
         <div class="control">
-          <label data-i18n="chaserTrueAnomLabel">Anomalia verdadeira inicial do Chaser (graus, a partir do periastro)</label>
+          <label data-i18n="chaserTrueAnomLabel">Anomalia verdadeira inicial do Chaser (graus, a partir do perigeu)</label>
           <div class="row2">
             <input type="range" id="chaserTrueAnomSlider" min="0" max="360" step="0.1">
             <input type="number" id="chaserTrueAnom" min="0" max="360" step="0.1">
@@ -274,7 +291,6 @@
         <div class="buttons">
           <button id="playPauseButton" class="primary" onclick="togglePlayPause()">Play</button>
           <button onclick="resetAnimation()">Resetar animação</button>
-          <button onclick="runSimulation()">Atualizar gráficos</button>
         </div>
       </div>
     </div>
@@ -292,8 +308,8 @@
           <th>Órbita / Evento</th>
           <th>a (km)</th>
           <th>e</th>
-          <th>Apside 1 alt (km)</th>
-          <th>Apside 2 alt (km)</th>
+          <th>Perigeu alt (km)</th>
+          <th>Apogeu alt (km)</th>
           <th>Período (h)</th>
           <th data-i18n="summaryRelativeTime">Tempo relativo (h)</th>
           <th>Tempo de missão (h)</th>
@@ -312,8 +328,8 @@ const LANG_KEY = 'rendezvous_sim_lang_v81';
 
 const I18N = {
   pt: {
-    appTitle: 'Simulador 2D de Rendezvous Orbital',
-    versionLabel: 'Versão 8.1',
+    appTitle: 'Simulador de Rendezvous Orbital',
+    versionLabel: 'Versão 1.0',
     helpButton: 'Help / Info',
     presetsTitle: 'Presets',
     loadButton: 'Carregar',
@@ -326,25 +342,25 @@ const I18N = {
     helpHowTitle: 'Como usar',
     helpInitialPreset: 'Use <b>Configuração inicial (sem preset)</b> e clique em <b>Carregar</b> para voltar aos parâmetros iniciais.',
     helpPresets: 'Presets salvos, importados ou criados ficam no navegador. Você pode removê-los um por um e exportar a lista completa em JSON.',
-    helpOrbits: 'Em <b>Órbita inicial do Target</b> e <b>Órbita inicial do Chaser</b>, o modo simples usa órbita circular. Para órbitas elípticas, marque <b>Usar órbita geral</b>.',
-    helpBurns: 'As queimas <b>NC</b> são disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção da <b>Apside 1 do Chaser</b>.',
+    helpOrbits: 'Em <b>Órbita inicial do Target</b> e <b>Órbita inicial do Chaser</b>, marque <b>Órbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.',
+    helpBurns: 'As queimas <b>NC</b> são disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção do <b>perigeu do Chaser</b>.',
     helpSliders: 'Dê duplo clique em qualquer slider para retornar ao zero. Quando o slider não permite zero, ele volta ao menor valor permitido.',
     helpGradient: 'No gráfico inercial, a trajetória do Chaser usa um gradiente <b>preto → azul</b> para indicar início → fim.',
     targetOrbitTitle: 'Órbita inicial do Target',
     chaserOrbitTitle: 'Órbita inicial do Chaser',
-    useGeneralOrbit: 'Usar órbita geral',
-    targetAltLabel: 'Altitude do Target (km)',
-    targetPhaseRelLabel: 'Fase inicial do Target relativa ao Chaser (graus)',
-    targetAps1Label: 'Apside 1 do Target (km)',
-    targetAps2Label: 'Apside 2 do Target (km)',
-    targetArgAps1Label: 'Argumento da Apside 1 do Target (graus)',
-    targetTrueAnomLabel: 'Anomalia verdadeira inicial do Target (graus, a partir do periastro)',
-    chaserAltLabel: 'Altitude do Chaser (km)',
-    chaserPhaseLabel: 'Fase inicial do Chaser (graus)',
-    chaserAps1Label: 'Apside 1 do Chaser (km)',
-    chaserAps2Label: 'Apside 2 do Chaser (km)',
-    chaserArgAps1Label: 'Argumento da Apside 1 do Chaser (graus)',
-    chaserTrueAnomLabel: 'Anomalia verdadeira inicial do Chaser (graus, a partir do periastro)',
+    useGeneralOrbit: 'Órbita circular',
+    targetAltLabel: 'Altitude da órbita do Target (km)',
+    targetPhaseRelLabel: 'Longitude verdadeira inicial do Target (graus, a partir do Leste)',
+    targetAps1Label: 'Altitude do perigeu do Target (km)',
+    targetAps2Label: 'Altitude do apogeu do Target (km)',
+    targetArgAps1Label: 'Argumento do perigeu do Target (graus)',
+    targetTrueAnomLabel: 'Anomalia verdadeira inicial do Target (graus, a partir do perigeu)',
+    chaserAltLabel: 'Altitude da órbita do Chaser (km)',
+    chaserPhaseLabel: 'Longitude verdadeira inicial do Chaser (graus, a partir do Leste)',
+    chaserAps1Label: 'Altitude do perigeu do Chaser (km)',
+    chaserAps2Label: 'Altitude do apogeu do Chaser (km)',
+    chaserArgAps1Label: 'Argumento do perigeu do Chaser (graus)',
+    chaserTrueAnomLabel: 'Anomalia verdadeira inicial do Chaser (graus, a partir do perigeu)',
     logSliderHint: 'Slider logarítmico: 100 km até 10.000 km.',
     ncBurnsTitle: 'Queimas NC',
     addNCButton: 'Adicionar NC',
@@ -361,7 +377,6 @@ const I18N = {
     playButton: 'Play',
     pauseButton: 'Pause',
     resetAnimationButton: 'Resetar animação',
-    updateGraphsButton: 'Atualizar gráficos',
     summaryOrbitEvent: 'Órbita / Evento',
     summaryPeriod: 'Período (h)',
     summaryRelativeTime: 'Tempo relativo (h)',
@@ -387,20 +402,23 @@ const I18N = {
     burnEvent: '{turns} voltas + {phase}°',
     earth: 'Terra',
     chaserGradient: 'Chaser (gradiente início→fim)',
-    chaserApsAxis: 'Eixo Apside 1–2 do Chaser',
-    chaserAps1: 'Apside 1 do Chaser',
-    chaserAps2: 'Apside 2 do Chaser',
+    targetApsAxis: 'Eixo perigeu-apogeu do Target',
+    targetAps1: 'Perigeu do Target',
+    targetAps2: 'Apogeu do Target',
+    chaserApsAxis: 'Eixo perigeu-apogeu do Chaser',
+    chaserAps1: 'Perigeu do Chaser',
+    chaserAps2: 'Apogeu do Chaser',
     targetNow: 'Target (agora)',
     chaserNow: 'Chaser (agora)',
-    inertialTitle: 'Vista inercial — polo norte',
+    inertialTitle: 'Vista orbital superior',
     relativeTrajectory: 'Trajetória relativa',
     relativeTitleLvlh: 'Frame relativo do Target — LVLH linear',
     relativeTitleCurvilinear: 'Frame relativo do Target — Curvilinear',
     positiveDown: 'positivo para baixo'
   },
   en: {
-    appTitle: '2D Orbital Rendezvous Simulator',
-    versionLabel: 'Version 8.1',
+    appTitle: 'Orbital Rendezvous Simulator',
+    versionLabel: 'Version 1.0',
     helpButton: 'Help / Info',
     presetsTitle: 'Presets',
     loadButton: 'Load',
@@ -413,24 +431,24 @@ const I18N = {
     helpHowTitle: 'How to use',
     helpInitialPreset: 'Use <b>Initial configuration (no preset)</b> and click <b>Load</b> to restore the starting parameters.',
     helpPresets: 'Saved, imported, or newly created presets are kept in the browser. You can remove them one by one and export the full list as JSON.',
-    helpOrbits: 'In <b>Target initial orbit</b> and <b>Chaser initial orbit</b>, simple mode uses a circular orbit. For elliptical orbits, enable <b>Use general orbit</b>.',
-    helpBurns: '<b>NC</b> burns fire when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser Apside 1</b> direction as the reference.',
+    helpOrbits: 'In <b>Target initial orbit</b> and <b>Chaser initial orbit</b>, enable <b>Circular orbit</b> to use altitude + initial true longitude. Disable it to use perigee, apogee, argument of perigee, and true anomaly.',
+    helpBurns: '<b>NC</b> burns fire when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser perigee</b> direction as the reference.',
     helpSliders: 'Double-click any slider to return to zero. When a slider cannot reach zero, it returns to its minimum value.',
     helpGradient: 'In the inertial plot, the Chaser trajectory uses a <b>black → blue</b> gradient to show start → finish.',
     targetOrbitTitle: 'Target initial orbit',
     chaserOrbitTitle: 'Chaser initial orbit',
-    useGeneralOrbit: 'Use general orbit',
-    targetAltLabel: 'Target altitude (km)',
-    targetPhaseRelLabel: 'Target initial phase relative to Chaser (degrees)',
-    targetAps1Label: 'Target Apside 1 (km)',
-    targetAps2Label: 'Target Apside 2 (km)',
-    targetArgAps1Label: 'Target Apside 1 argument (degrees)',
+    useGeneralOrbit: 'Circular orbit',
+    targetAltLabel: 'Target orbit altitude (km)',
+    targetPhaseRelLabel: 'Target initial true longitude (degrees, from East)',
+    targetAps1Label: 'Target perigee altitude (km)',
+    targetAps2Label: 'Target apogee altitude (km)',
+    targetArgAps1Label: 'Target argument of perigee (degrees)',
     targetTrueAnomLabel: 'Target initial true anomaly (degrees, from periapsis)',
-    chaserAltLabel: 'Chaser altitude (km)',
-    chaserPhaseLabel: 'Chaser initial phase (degrees)',
-    chaserAps1Label: 'Chaser Apside 1 (km)',
-    chaserAps2Label: 'Chaser Apside 2 (km)',
-    chaserArgAps1Label: 'Chaser Apside 1 argument (degrees)',
+    chaserAltLabel: 'Chaser orbit altitude (km)',
+    chaserPhaseLabel: 'Chaser initial true longitude (degrees, from East)',
+    chaserAps1Label: 'Chaser perigee altitude (km)',
+    chaserAps2Label: 'Chaser apogee altitude (km)',
+    chaserArgAps1Label: 'Chaser argument of perigee (degrees)',
     chaserTrueAnomLabel: 'Chaser initial true anomaly (degrees, from periapsis)',
     logSliderHint: 'Logarithmic slider: 100 km to 10,000 km.',
     ncBurnsTitle: 'NC burns',
@@ -448,7 +466,6 @@ const I18N = {
     playButton: 'Play',
     pauseButton: 'Pause',
     resetAnimationButton: 'Reset animation',
-    updateGraphsButton: 'Update plots',
     summaryOrbitEvent: 'Orbit / Event',
     summaryPeriod: 'Period (h)',
     summaryRelativeTime: 'Relative time (h)',
@@ -474,12 +491,15 @@ const I18N = {
     burnEvent: '{turns} revolutions + {phase}°',
     earth: 'Earth',
     chaserGradient: 'Chaser (start→finish gradient)',
-    chaserApsAxis: 'Chaser Apside 1–2 axis',
-    chaserAps1: 'Chaser Apside 1',
-    chaserAps2: 'Chaser Apside 2',
+    targetApsAxis: 'Target perigee-apogee axis',
+    targetAps1: 'Target perigee',
+    targetAps2: 'Target apogee',
+    chaserApsAxis: 'Chaser perigee-apogee axis',
+    chaserAps1: 'Chaser perigee',
+    chaserAps2: 'Chaser apogee',
     targetNow: 'Target (now)',
     chaserNow: 'Chaser (now)',
-    inertialTitle: 'Inertial view — north pole',
+    inertialTitle: 'Top-down orbital view',
     relativeTrajectory: 'Relative trajectory',
     relativeTitleLvlh: 'Target relative frame — LVLH linear',
     relativeTitleCurvilinear: 'Target relative frame — Curvilinear',
@@ -531,8 +551,12 @@ function applyLanguage(){
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
 
-  document.getElementById('langPt')?.classList.toggle('active', currentLang === 'pt');
-  document.getElementById('langEn')?.classList.toggle('active', currentLang === 'en');
+  const langPt = document.getElementById('langPt');
+  const langEn = document.getElementById('langEn');
+  langPt?.classList.toggle('active', currentLang === 'pt');
+  langEn?.classList.toggle('active', currentLang === 'en');
+  langPt?.setAttribute('aria-pressed', currentLang === 'pt' ? 'true' : 'false');
+  langEn?.setAttribute('aria-pressed', currentLang === 'en' ? 'true' : 'false');
 
   const targetCard = document.getElementById('targetUseGeneral')?.closest('.card');
   const chaserCard = document.getElementById('chaserUseGeneral')?.closest('.card');
@@ -565,10 +589,8 @@ function applyLanguage(){
   }
   const addNCButton = document.querySelector('button[onclick="addNC()"]');
   const resetButton = document.querySelector('button[onclick="resetAnimation()"]');
-  const updateButton = document.querySelector('button[onclick="runSimulation()"]');
   if(addNCButton) addNCButton.innerText = t('addNCButton');
   if(resetButton) resetButton.innerText = t('resetAnimationButton');
-  if(updateButton) updateButton.innerText = t('updateGraphsButton');
 
   const summaryHeaders = document.querySelectorAll('#summaryTable th');
   if(summaryHeaders[0]) summaryHeaders[0].innerText = t('summaryOrbitEvent');
@@ -598,7 +620,7 @@ const INITIAL_PRESET_SEED = {
   "Baen example": {
     "targetUseGeneral": false,
       "targetAlt": 8000,
-      "targetPhaseRel": 359.9,
+      "targetPhaseRel": 84.9,
       "targetAps1": 8000,
       "targetAps2": 8000,
       "targetArgAps1": 0,
@@ -649,6 +671,7 @@ let animationFrameId = null;
 let animationStartWallMs = null;
 let currentAnimIdx = 0;
 let elapsedSimSec = 0;
+let simulationTimerId = null;
 
 function deg2rad(d){ return d*Math.PI/180.0; }
 function rad2deg(r){ return r*180.0/Math.PI; }
@@ -685,24 +708,16 @@ function circularState(radius, phaseDeg){
   return [r,v];
 }
 
-function stateFromApsidesAndGeometry(aps1Alt, aps2Alt, argAps1Deg, trueAnomDeg){
-  const rA1 = Re + aps1Alt;
-  const rA2 = Re + aps2Alt;
-
-  let rp, ra, periArgDeg;
-  if(rA2 >= rA1){
-    rp = rA1; ra = rA2; periArgDeg = argAps1Deg;
-  } else {
-    rp = rA2; ra = rA1; periArgDeg = argAps1Deg + 180.0;
-  }
-
+function stateFromPerigeeApogee(perigeeAlt, apogeeAlt, argPerigeeDeg, trueAnomDeg){
+  const rp = Re + perigeeAlt;
+  const ra = Re + apogeeAlt;
   const a = 0.5*(rp + ra);
   const e = (ra - rp) / (ra + rp);
   const f = deg2rad(trueAnomDeg);
   const p = a * (1 - e*e);
   const rmag = p / (1 + e*Math.cos(f));
 
-  const theta = deg2rad(periArgDeg) + f;
+  const theta = deg2rad(argPerigeeDeg) + f;
   const r = [rmag*Math.cos(theta), rmag*Math.sin(theta)];
 
   const fac = Math.sqrt(mu / p);
@@ -755,8 +770,8 @@ function bindSliderReset(slider, input, valueForSlider=null, valueForInput=null)
 
 function bindLinear(sliderId, inputId){
   const s = document.getElementById(sliderId), n = document.getElementById(inputId);
-  s.addEventListener('input', ()=>{ n.value = s.value; });
-  n.addEventListener('input', ()=>{ s.value = n.value; });
+  s.addEventListener('input', ()=>{ n.value = s.value; scheduleSimulation(); });
+  n.addEventListener('input', ()=>{ s.value = n.value; scheduleSimulation(); });
   bindSliderReset(s, n);
 }
 
@@ -764,8 +779,8 @@ function bindLogAltitude(sliderId, inputId){
   const s = document.getElementById(sliderId), n = document.getElementById(inputId);
   function sliderToVal(x){ return Math.round(Math.pow(10, parseFloat(x))); }
   function valToSlider(v){ return Math.log10(parseFloat(v)); }
-  s.addEventListener('input', ()=>{ n.value = sliderToVal(s.value); });
-  n.addEventListener('input', ()=>{ const v = Math.min(10000, Math.max(100, parseFloat(n.value)||100)); s.value = valToSlider(v); });
+  s.addEventListener('input', ()=>{ n.value = sliderToVal(s.value); scheduleSimulation(); });
+  n.addEventListener('input', ()=>{ const v = Math.min(10000, Math.max(100, parseFloat(n.value)||100)); s.value = valToSlider(v); scheduleSimulation(); });
   n.addEventListener('change', ()=>{ n.dispatchEvent(new Event('input')); });
   bindSliderReset(s, n, s.min, sliderToVal(s.min));
 }
@@ -779,14 +794,56 @@ function setLogPair(sliderId, inputId, val){
   document.getElementById(sliderId).value = Math.log10(val);
 }
 
+function enforcePerigeeApogee(which, changed){
+  const perigeeInput = document.getElementById(which + 'Aps1');
+  const apogeeInput = document.getElementById(which + 'Aps2');
+  const perigeeSlider = document.getElementById(which + 'Aps1Slider');
+  const apogeeSlider = document.getElementById(which + 'Aps2Slider');
+  const minAlt = parseFloat(perigeeInput.min) || 100;
+  const maxAlt = parseFloat(apogeeInput.max) || 10000;
+  const gap = 1;
+  let perigee = parseFloat(perigeeInput.value);
+  let apogee = parseFloat(apogeeInput.value);
+
+  if(!Number.isFinite(perigee)) perigee = minAlt;
+  if(!Number.isFinite(apogee)) apogee = Math.min(maxAlt, perigee + gap);
+
+  if(perigee >= apogee){
+    if(changed === 'perigee'){
+      apogee = Math.min(maxAlt, perigee + gap);
+      if(perigee >= apogee) perigee = Math.max(minAlt, apogee - gap);
+    } else {
+      perigee = Math.max(minAlt, apogee - gap);
+      if(perigee >= apogee) apogee = Math.min(maxAlt, perigee + gap);
+    }
+  }
+
+  perigeeInput.value = perigee;
+  perigeeSlider.value = perigee;
+  apogeeInput.value = apogee;
+  apogeeSlider.value = apogee;
+}
+
+function bindPerigeeApogee(which){
+  const perigeeIds = [which + 'Aps1Slider', which + 'Aps1'];
+  const apogeeIds = [which + 'Aps2Slider', which + 'Aps2'];
+  perigeeIds.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => enforcePerigeeApogee(which, 'perigee'));
+  });
+  apogeeIds.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => enforcePerigeeApogee(which, 'apogee'));
+  });
+}
+
 function toggleHelp(){
   document.getElementById('helpBox').classList.toggle('hidden');
 }
 
-function updateOrbitSections(which){
-  const useGeneral = document.getElementById(which + 'UseGeneral').checked;
-  document.getElementById(which + 'SimpleSection').classList.toggle('hidden', useGeneral);
-  document.getElementById(which + 'AdvancedSection').classList.toggle('hidden', !useGeneral);
+function updateOrbitSections(which, refresh=true){
+  const useCircular = document.getElementById(which + 'UseGeneral').checked;
+  document.getElementById(which + 'SimpleSection').classList.toggle('hidden', !useCircular);
+  document.getElementById(which + 'AdvancedSection').classList.toggle('hidden', useCircular);
+  if(refresh) scheduleSimulation();
 }
 
 function collapseAllNCs(exceptCard=null){
@@ -831,7 +888,7 @@ function renumberNCs(){
   });
 }
 
-function addNC(values=null){
+function addNC(values=null, refresh=true){
   const container = document.getElementById('ncContainer');
   const idx = container.children.length + 1;
   const name = `NC${idx}`;
@@ -845,7 +902,7 @@ function addNC(values=null){
   div.innerHTML = `
     <div class="nc-head" onclick="toggleNC(this.closest('.nc-card'))">
       <div class="nc-title-wrap"><span class="nc-chevron">▶</span><b class="nc-title">${name}</b></div>
-      <button class="mini danger nc-remove-button" onclick="event.stopPropagation(); this.closest('.nc-card').remove(); renumberNCs(); runSimulation();">${t('ncRemoveButton')}</button>
+      <button class="mini danger nc-remove-button" onclick="event.stopPropagation(); this.closest('.nc-card').remove(); renumberNCs(); scheduleSimulation();">${t('ncRemoveButton')}</button>
     </div>
     <div class="nc-body collapsed">
       <div class="control">
@@ -872,28 +929,30 @@ function addNC(values=null){
   const dvSlider = div.querySelector('.nc-dv-slider');
   const dvInput = div.querySelector('.nc-dv');
 
-  turnsSlider.addEventListener('input', ()=>{ turnsInput.value = turnsSlider.value; });
-  turnsInput.addEventListener('input', ()=>{ turnsSlider.value = turnsInput.value; });
-  dvSlider.addEventListener('input', ()=>{ dvInput.value = dvSlider.value; });
-  dvInput.addEventListener('input', ()=>{ dvSlider.value = dvInput.value; });
+  turnsSlider.addEventListener('input', ()=>{ turnsInput.value = turnsSlider.value; scheduleSimulation(); });
+  turnsInput.addEventListener('input', ()=>{ turnsSlider.value = turnsInput.value; scheduleSimulation(); });
+  dvSlider.addEventListener('input', ()=>{ dvInput.value = dvSlider.value; scheduleSimulation(); });
+  dvInput.addEventListener('input', ()=>{ dvSlider.value = dvInput.value; scheduleSimulation(); });
+  div.querySelector('.nc-phase').addEventListener('input', scheduleSimulation);
   bindSliderReset(turnsSlider, turnsInput);
   bindSliderReset(dvSlider, dvInput);
 
   renumberNCs();
   collapseAllNCs(div);
   toggleNC(div);
+  if(refresh) scheduleSimulation();
 }
 
 function setNCs(ncs){
   const container = document.getElementById('ncContainer');
   container.innerHTML = '';
-  (ncs || []).forEach(nc => addNC(nc));
+  (ncs || []).forEach(nc => addNC(nc, false));
   renumberNCs();
 }
 
 function getParams(){
   return {
-    targetUseGeneral: document.getElementById('targetUseGeneral').checked,
+    targetUseGeneral: !document.getElementById('targetUseGeneral').checked,
     targetAlt: parseFloat(document.getElementById('targetAlt').value),
     targetPhaseRel: parseFloat(document.getElementById('targetPhaseRel').value),
     targetAps1: parseFloat(document.getElementById('targetAps1').value),
@@ -901,7 +960,7 @@ function getParams(){
     targetArgAps1: parseFloat(document.getElementById('targetArgAps1').value),
     targetTrueAnom: parseFloat(document.getElementById('targetTrueAnom').value),
 
-    chaserUseGeneral: document.getElementById('chaserUseGeneral').checked,
+    chaserUseGeneral: !document.getElementById('chaserUseGeneral').checked,
     chaserAlt: parseFloat(document.getElementById('chaserAlt').value),
     chaserPhase: parseFloat(document.getElementById('chaserPhase').value),
     chaserAps1: parseFloat(document.getElementById('chaserAps1').value),
@@ -918,13 +977,14 @@ function getParams(){
 }
 
 function setParams(params){
-  document.getElementById('targetUseGeneral').checked = !!params.targetUseGeneral;
-  document.getElementById('chaserUseGeneral').checked = !!params.chaserUseGeneral;
+  document.getElementById('targetUseGeneral').checked = !params.targetUseGeneral;
+  document.getElementById('chaserUseGeneral').checked = !params.chaserUseGeneral;
 
   setLogPair('targetAltSlider','targetAlt', params.targetAlt ?? 420);
   setLinearPair('targetPhaseRelSlider','targetPhaseRel', params.targetPhaseRel ?? 70);
   setLinearPair('targetAps1Slider','targetAps1', params.targetAps1 ?? 420);
   setLinearPair('targetAps2Slider','targetAps2', params.targetAps2 ?? 420);
+  enforcePerigeeApogee('target', 'apogee');
   setLinearPair('targetArgAps1Slider','targetArgAps1', params.targetArgAps1 ?? 0);
   setLinearPair('targetTrueAnomSlider','targetTrueAnom', params.targetTrueAnom ?? 0);
 
@@ -932,6 +992,7 @@ function setParams(params){
   setLinearPair('chaserPhaseSlider','chaserPhase', params.chaserPhase ?? 0);
   setLinearPair('chaserAps1Slider','chaserAps1', params.chaserAps1 ?? 220);
   setLinearPair('chaserAps2Slider','chaserAps2', params.chaserAps2 ?? 260);
+  enforcePerigeeApogee('chaser', 'apogee');
   setLinearPair('chaserArgAps1Slider','chaserArgAps1', params.chaserArgAps1 ?? 0);
   setLinearPair('chaserTrueAnomSlider','chaserTrueAnom', params.chaserTrueAnom ?? 0);
 
@@ -940,15 +1001,15 @@ function setParams(params){
   setLinearPair('timeWarpSlider','timeWarp', params.timeWarp ?? 1200);
   document.getElementById('relMode').value = params.relMode ?? 'curvilinear';
 
-  updateOrbitSections('target');
-  updateOrbitSections('chaser');
+  updateOrbitSections('target', false);
+  updateOrbitSections('chaser', false);
   setNCs(params.burns ?? []);
 }
 
 function initialStateFromParams(params){
   let rC, vC, chaserAps1Arg;
   if(params.chaserUseGeneral){
-    [rC, vC] = stateFromApsidesAndGeometry(params.chaserAps1, params.chaserAps2, params.chaserArgAps1, params.chaserTrueAnom);
+    [rC, vC] = stateFromPerigeeApogee(params.chaserAps1, params.chaserAps2, params.chaserArgAps1, params.chaserTrueAnom);
     chaserAps1Arg = params.chaserArgAps1;
   } else {
     [rC, vC] = circularState(Re + params.chaserAlt, params.chaserPhase);
@@ -957,13 +1018,11 @@ function initialStateFromParams(params){
 
   let rT, vT, targetAps1Arg;
   if(params.targetUseGeneral){
-    [rT, vT] = stateFromApsidesAndGeometry(params.targetAps1, params.targetAps2, params.targetArgAps1, params.targetTrueAnom);
+    [rT, vT] = stateFromPerigeeApogee(params.targetAps1, params.targetAps2, params.targetArgAps1, params.targetTrueAnom);
     targetAps1Arg = params.targetArgAps1;
   } else {
-    const chaserAngle = rad2deg(Math.atan2(rC[1], rC[0]));
-    const targetAbsPhase = chaserAngle + params.targetPhaseRel;
-    [rT, vT] = circularState(Re + params.targetAlt, targetAbsPhase);
-    targetAps1Arg = targetAbsPhase;
+    [rT, vT] = circularState(Re + params.targetAlt, params.targetPhaseRel);
+    targetAps1Arg = params.targetPhaseRel;
   }
 
   return {rT, vT, rC, vC, targetAps1Arg, chaserAps1Arg};
@@ -985,8 +1044,8 @@ function simulate(params){
   let prevDeltaTheta = null;
 
   for(let i=0;i<steps;i++){
-    const t = i*params.dt;
-    times.push(t);
+    const timeSec = i*params.dt;
+    times.push(timeSec);
     targetX.push(rT[0]); targetY.push(rT[1]);
     chaserX.push(rC[0]); chaserY.push(rC[1]);
 
@@ -1036,7 +1095,7 @@ function simulate(params){
         const oe = orbitalElements(rC, vC, init.chaserAps1Arg);
         burnsApplied.push({
           name:burn.name,
-          t_s:t,
+          t_s:timeSec,
           event:t('burnEvent', {turns: burn.turns, phase: burn.phaseDeg.toFixed(1)}),
           dv_m_s:burn.dv_m_s,
           a_km:oe.a,
@@ -1135,6 +1194,21 @@ function buildGradientLineTraces(xs, ys, name){
   return traces;
 }
 
+function addApsideAxisTraces(traces, orbit){
+  if(!orbit.enabled || orbit.e <= 1e-6) return;
+
+  const lon = deg2rad(orbit.aps1Arg);
+  const ux = Math.cos(lon);
+  const uy = Math.sin(lon);
+  const r1 = Re + Math.max(0, orbit.aps1Alt);
+  const r2 = Re + Math.max(0, orbit.aps2Alt);
+  traces.push(
+    {x:[-r2*ux, r1*ux], y:[-r2*uy, r1*uy], mode:'lines', name:orbit.axisName, line:{color:orbit.color, dash:'dash', width:1}},
+    {x:[r1*ux], y:[r1*uy], mode:'markers', name:orbit.aps1Name, marker:{color:orbit.color, size:8}},
+    {x:[-r2*ux], y:[-r2*uy], mode:'markers', name:orbit.aps2Name, marker:{color:orbit.color, size:8}}
+  );
+}
+
 function plotData(data, animIdx=null){
   if(animIdx !== null){
     animIdx = Math.max(0, Math.min(data.times.length - 1, Math.floor(animIdx) || 0));
@@ -1151,14 +1225,29 @@ function plotData(data, animIdx=null){
     ...buildGradientLineTraces(data.chaserX, data.chaserY, t('chaserGradient'))
   ];
 
-  if(data.params.chaserUseGeneral){
-    const lon = deg2rad(data.chaserAps1Arg);
-    inertialTraces.push(
-      {x:[-maxAbs*Math.cos(lon), maxAbs*Math.cos(lon)], y:[-maxAbs*Math.sin(lon), maxAbs*Math.sin(lon)], mode:'lines', name:t('chaserApsAxis'), line:{dash:'dash', width:1}},
-      {x:[(Re+Math.max(0,data.params.chaserAps1))*Math.cos(lon)], y:[(Re+Math.max(0,data.params.chaserAps1))*Math.sin(lon)], mode:'markers', name:t('chaserAps1'), marker:{size:8}},
-      {x:[-(Re+Math.max(0,data.params.chaserAps2))*Math.cos(lon)], y:[-(Re+Math.max(0,data.params.chaserAps2))*Math.sin(lon)], mode:'markers', name:t('chaserAps2'), marker:{size:8}}
-    );
-  }
+  addApsideAxisTraces(inertialTraces, {
+    enabled:data.params.targetUseGeneral,
+    e:data.targetOE.e,
+    aps1Arg:data.targetAps1Arg,
+    aps1Alt:data.params.targetAps1,
+    aps2Alt:data.params.targetAps2,
+    axisName:t('targetApsAxis'),
+    aps1Name:t('targetAps1'),
+    aps2Name:t('targetAps2'),
+    color:'#1f77b4'
+  });
+
+  addApsideAxisTraces(inertialTraces, {
+    enabled:data.params.chaserUseGeneral,
+    e:data.chaserInitial.e,
+    aps1Arg:data.chaserAps1Arg,
+    aps1Alt:data.params.chaserAps1,
+    aps2Alt:data.params.chaserAps2,
+    axisName:t('chaserApsAxis'),
+    aps1Name:t('chaserAps1'),
+    aps2Name:t('chaserAps2'),
+    color:'#ff7f0e'
+  });
 
   if(data.markers.length>0){
     inertialTraces.push({x:data.markers.map(m=>m.x), y:data.markers.map(m=>m.y), mode:'markers+text', name:'NCs', text:data.markers.map(m=>m.name), textposition:'top center', marker:{symbol:'x', size:10}});
@@ -1233,7 +1322,19 @@ function renderAnimationFrame(nowMs){
   animationFrameId = requestAnimationFrame(renderAnimationFrame);
 }
 
+function scheduleSimulation(){
+  if(simulationTimerId !== null) clearTimeout(simulationTimerId);
+  simulationTimerId = setTimeout(() => {
+    simulationTimerId = null;
+    runSimulation();
+  }, 120);
+}
+
 function runSimulation(){
+  if(simulationTimerId !== null){
+    clearTimeout(simulationTimerId);
+    simulationTimerId = null;
+  }
   pauseAnimation(false);
   try {
     const params = getParams();
@@ -1442,6 +1543,7 @@ function initControls(){
   bindLinear('targetPhaseRelSlider','targetPhaseRel');
   bindLinear('targetAps1Slider','targetAps1');
   bindLinear('targetAps2Slider','targetAps2');
+  bindPerigeeApogee('target');
   bindLinear('targetArgAps1Slider','targetArgAps1');
   bindLinear('targetTrueAnomSlider','targetTrueAnom');
 
@@ -1449,12 +1551,14 @@ function initControls(){
   bindLinear('chaserPhaseSlider','chaserPhase');
   bindLinear('chaserAps1Slider','chaserAps1');
   bindLinear('chaserAps2Slider','chaserAps2');
+  bindPerigeeApogee('chaser');
   bindLinear('chaserArgAps1Slider','chaserArgAps1');
   bindLinear('chaserTrueAnomSlider','chaserTrueAnom');
 
   bindLinear('tFinalHoursSlider','tFinalHours');
   bindLinear('dtSlider','dt');
   bindLinear('timeWarpSlider','timeWarp');
+  document.getElementById('relMode').addEventListener('change', scheduleSimulation);
 
   setParams(getInitialParams());
 
