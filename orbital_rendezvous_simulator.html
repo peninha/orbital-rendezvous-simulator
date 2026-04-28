@@ -77,7 +77,7 @@
     <div class="topbar">
     <div>
       <h1 data-i18n="appTitle">Simulador de Rendezvous Orbital</h1>
-      <div class="version" data-i18n="versionLabel">Versão 1.0</div>
+      <div class="version" data-i18n="versionLabel">Versão 1.2</div>
     </div>
     <div class="toptools">
       <div class="lang-switch" aria-label="Language">
@@ -116,7 +116,7 @@
   </div>
 
     <div id="helpBox" class="helpbox hidden">
-    <b data-i18n="helpWhatTitle">O que ? este simulador</b>
+    <b data-i18n="helpWhatTitle">O que ? este simulador?</b>
     <p data-i18n-html="helpIntro" style="margin-top:8px;">
       Este simulador mostra um rendezvous orbital 2D simplificado e coplanar entre um <b>Target</b> e um <b>Chaser</b>.
       Voc? define as ?rbitas iniciais, programa queimas NC por <b>N voltas + fase</b>, anima a aproxima??o e compara a vista
@@ -128,6 +128,8 @@
       <li data-i18n="helpPresets">Presets salvos, importados ou criados ficam no navegador. Voc? pode remov?-los um por um e exportar a lista completa em JSON.</li>
       <li data-i18n-html="helpOrbits">Em <b>?rbita inicial do Target</b> e <b>?rbita inicial do Chaser</b>, marque <b>?rbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.</li>
       <li data-i18n-html="helpBurns">As queimas <b>NC</b> s?o disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como refer?ncia a dire??o do <b>perigeu do Chaser</b>.</li>
+      <li data-i18n="helpTargetInstances">No gráfico relativo curvilinear, as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.</li>
+      <li data-i18n-html="helpTerryExample">O preset <b>Terry Burlison's Example</b> ? inspirado nas fig. 8 e 9 do artigo de Terry Burlison.</li>
       <li data-i18n="helpSliders">D? duplo clique em qualquer slider para retornar ao zero. Quando o slider n?o permite zero, ele volta ao menor valor permitido.</li>
       <li data-i18n-html="helpGradient">No gr?fico inercial, a trajet?ria do Chaser usa um gradiente <b>preto ? azul</b> para indicar in?cio ? fim.</li>
     </ul>
@@ -329,7 +331,7 @@ const LANG_KEY = 'rendezvous_sim_lang_v81';
 const I18N = {
   pt: {
     appTitle: 'Simulador de Rendezvous Orbital',
-    versionLabel: 'Versão 1.0',
+    versionLabel: 'Versão 1.2',
     helpButton: 'Help / Info',
     presetsTitle: 'Presets',
     loadButton: 'Carregar',
@@ -337,13 +339,15 @@ const I18N = {
     removeButton: 'Remover',
     exportListButton: 'Exportar lista',
     importButton: 'Importar',
-    helpWhatTitle: 'O que é este simulador',
-    helpIntro: 'Este simulador mostra um rendezvous orbital 2D simplificado e coplanar entre um <b>Target</b> e um <b>Chaser</b>. Você define as órbitas iniciais, programa queimas NC por <b>N voltas + fase</b>, anima a aproximação e compara a vista inercial com a trajetória relativa no frame do Target.',
+    helpWhatTitle: 'O que é este simulador?',
+    helpIntro: 'Rendezvous orbital é o conjunto de manobras usado para se aproximar de um alvo (<b>Target</b>) no espaço, normalmente com o intuito de acoplar com ele. Não é algo simples como “apontar para o alvo e acionar os motores”: envolve igualar a trajetória do alvo e também chegar ao mesmo ponto no espaço no momento certo, o que chamamos de fase orbital. Neste simulador, o <b>Chaser</b> se aproxima usando queimas <b>NC</b> (<i>Nominal Catchup</i>), manobras tangenciais que alteram o período orbital e mudam a fase em relação ao alvo.',
     helpHowTitle: 'Como usar',
     helpInitialPreset: 'Use <b>Configuração inicial (sem preset)</b> e clique em <b>Carregar</b> para voltar aos parâmetros iniciais.',
     helpPresets: 'Presets salvos, importados ou criados ficam no navegador. Você pode removê-los um por um e exportar a lista completa em JSON.',
     helpOrbits: 'Em <b>Órbita inicial do Target</b> e <b>Órbita inicial do Chaser</b>, marque <b>Órbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.',
-    helpBurns: 'As queimas <b>NC</b> são disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção do <b>perigeu do Chaser</b>.',
+    helpBurns: 'Cada queima <b>NC</b> é disparada quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção do <b>perigeu do Chaser</b>. Use Δv positivo ou negativo para alterar o período orbital e observar como a trajetória relativa muda.',
+    helpTargetInstances: 'No gráfico relativo curvilinear, as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.',
+    helpTerryExample: 'O preset <b>Terry Burlison&apos;s Example</b> é inspirado nas fig. 8 e 9 do excelente artigo <a href="https://www.baen.com/rendezvous" target="_blank" rel="noopener">Rendezvous and Docking: A User’s Guide for Non Rocket Scientists</a>, em que Terry Burlison explica como funciona o rendezvous orbital. Recomendo ler o artigo para melhor usar esta ferramenta. Note, porém, que o exemplo da fig. 9 não bate com a descrição do texto e também não representa bem o que acontece na realidade: quando ocorrem as queimas de fase (NC), a trajetória oscilante, além de alterar a altura dos picos e vales, também sofre uma alteração no espaçamento entre as ondas, como este simulador mostra.',
     helpSliders: 'Dê duplo clique em qualquer slider para retornar ao zero. Quando o slider não permite zero, ele volta ao menor valor permitido.',
     helpGradient: 'No gráfico inercial, a trajetória do Chaser usa um gradiente <b>preto → azul</b> para indicar início → fim.',
     targetOrbitTitle: 'Órbita inicial do Target',
@@ -402,14 +406,15 @@ const I18N = {
     burnEvent: '{turns} voltas + {phase}°',
     earth: 'Terra',
     chaserGradient: 'Chaser (gradiente início→fim)',
-    targetApsAxis: 'Eixo perigeu-apogeu do Target',
+    targetApsAxis: 'Linha das apsides do Target',
     targetAps1: 'Perigeu do Target',
     targetAps2: 'Apogeu do Target',
-    chaserApsAxis: 'Eixo perigeu-apogeu do Chaser',
+    chaserApsAxis: 'Linha das apsides do Chaser',
     chaserAps1: 'Perigeu do Chaser',
     chaserAps2: 'Apogeu do Chaser',
     targetNow: 'Target (agora)',
     chaserNow: 'Chaser (agora)',
+    targetInstances: 'Instâncias do Target',
     inertialTitle: 'Vista orbital superior',
     relativeTrajectory: 'Trajetória relativa',
     relativeTitleLvlh: 'Frame relativo do Target — LVLH linear',
@@ -418,7 +423,7 @@ const I18N = {
   },
   en: {
     appTitle: 'Orbital Rendezvous Simulator',
-    versionLabel: 'Version 1.0',
+    versionLabel: 'Version 1.2',
     helpButton: 'Help / Info',
     presetsTitle: 'Presets',
     loadButton: 'Load',
@@ -426,13 +431,15 @@ const I18N = {
     removeButton: 'Remove',
     exportListButton: 'Export list',
     importButton: 'Import',
-    helpWhatTitle: 'What this simulator does',
-    helpIntro: 'This simulator shows a simplified coplanar 2D orbital rendezvous between a <b>Target</b> and a <b>Chaser</b>. You define the initial orbits, schedule NC burns by <b>N revolutions + phase</b>, animate the approach, and compare the inertial view with the relative trajectory in the Target frame.',
+    helpWhatTitle: 'What does this simulator do?',
+    helpIntro: 'Orbital rendezvous is not about pointing straight at the target: it is about adjusting energy and phase so two orbits meet at the right time. This tool lets you explore that idea in 2D: the <b>Target</b> is the reference vehicle and the <b>Chaser</b> is the vehicle trying to approach it. <b>NC</b> (<i>Nominal Catchup</i>) burns are tangential phasing maneuvers; after an NC, the Chaser gains or loses orbital time, creating new approach opportunities.',
     helpHowTitle: 'How to use',
     helpInitialPreset: 'Use <b>Initial configuration (no preset)</b> and click <b>Load</b> to restore the starting parameters.',
     helpPresets: 'Saved, imported, or newly created presets are kept in the browser. You can remove them one by one and export the full list as JSON.',
     helpOrbits: 'In <b>Target initial orbit</b> and <b>Chaser initial orbit</b>, enable <b>Circular orbit</b> to use altitude + initial true longitude. Disable it to use perigee, apogee, argument of perigee, and true anomaly.',
-    helpBurns: '<b>NC</b> burns fire when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser perigee</b> direction as the reference.',
+    helpBurns: 'Each <b>NC</b> burn fires when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser perigee</b> direction as the reference. Use positive or negative Δv to change orbital period and watch the relative trajectory respond.',
+    helpTargetInstances: 'In the curvilinear relative plot, vertical dashed lines mark later radial passes by the Target along the simulated trajectory.',
+    helpTerryExample: 'The <b>Terry Burlison&apos;s Example</b> preset is inspired by fig. 8 and 9 of Terry Burlison’s excellent article <a href="https://www.baen.com/rendezvous" target="_blank" rel="noopener">Rendezvous and Docking: A User’s Guide for Non Rocket Scientists</a>, where he explains how orbital rendezvous works. I recommend reading it to get more out of this tool. Note, however, that the fig. 9 example does not match the text description and does not fully represent what happens in reality: when phasing burns (NC) occur, the oscillating trajectory changes not only the height of its peaks and valleys, but also the spacing between waves, as this simulator shows.',
     helpSliders: 'Double-click any slider to return to zero. When a slider cannot reach zero, it returns to its minimum value.',
     helpGradient: 'In the inertial plot, the Chaser trajectory uses a <b>black → blue</b> gradient to show start → finish.',
     targetOrbitTitle: 'Target initial orbit',
@@ -443,13 +450,13 @@ const I18N = {
     targetAps1Label: 'Target perigee altitude (km)',
     targetAps2Label: 'Target apogee altitude (km)',
     targetArgAps1Label: 'Target argument of perigee (degrees)',
-    targetTrueAnomLabel: 'Target initial true anomaly (degrees, from periapsis)',
+    targetTrueAnomLabel: 'Target initial true anomaly (degrees, from perigee)',
     chaserAltLabel: 'Chaser orbit altitude (km)',
     chaserPhaseLabel: 'Chaser initial true longitude (degrees, from East)',
     chaserAps1Label: 'Chaser perigee altitude (km)',
     chaserAps2Label: 'Chaser apogee altitude (km)',
     chaserArgAps1Label: 'Chaser argument of perigee (degrees)',
-    chaserTrueAnomLabel: 'Chaser initial true anomaly (degrees, from periapsis)',
+    chaserTrueAnomLabel: 'Chaser initial true anomaly (degrees, from perigee)',
     logSliderHint: 'Logarithmic slider: 100 km to 10,000 km.',
     ncBurnsTitle: 'NC burns',
     addNCButton: 'Add NC',
@@ -491,14 +498,15 @@ const I18N = {
     burnEvent: '{turns} revolutions + {phase}°',
     earth: 'Earth',
     chaserGradient: 'Chaser (start→finish gradient)',
-    targetApsAxis: 'Target perigee-apogee axis',
+    targetApsAxis: 'Target line of apsides',
     targetAps1: 'Target perigee',
     targetAps2: 'Target apogee',
-    chaserApsAxis: 'Chaser perigee-apogee axis',
+    chaserApsAxis: 'Chaser line of apsides',
     chaserAps1: 'Chaser perigee',
     chaserAps2: 'Chaser apogee',
     targetNow: 'Target (now)',
     chaserNow: 'Chaser (now)',
+    targetInstances: 'Target instances',
     inertialTitle: 'Top-down orbital view',
     relativeTrajectory: 'Relative trajectory',
     relativeTitleLvlh: 'Target relative frame — LVLH linear',
@@ -617,7 +625,7 @@ function setLanguage(lang){
   pode editar/remover/exportar/importar a propria lista sem o codigo recria-los.
 */
 const INITIAL_PRESET_SEED = {
-  "Baen example": {
+  "Terry Burlison's Example": {
     "targetUseGeneral": false,
       "targetAlt": 8000,
       "targetPhaseRel": 84.9,
@@ -1035,7 +1043,7 @@ function simulate(params){
 
   const times = [];
   const targetX = [], targetY = [], chaserX = [], chaserY = [];
-  const relV = [], relR = [];
+  const relV = [], relR = [], relTheta = [];
   const burnsApplied = [], markers = [];
   const steps = Math.floor(params.tFinalHours*3600 / params.dt) + 1;
   const burns = params.burns.map(b => ({...b, triggerDeg: 360*b.turns + b.phaseDeg, done:false}));
@@ -1080,6 +1088,7 @@ function simulate(params){
       yRel = norm(rT) - norm(rC);
     }
     relV.push(xRel); relR.push(yRel);
+    relTheta.push(params.relMode === 'curvilinear' ? prevDeltaTheta : null);
 
     const chaserAngleDeg = wrap0to360(rad2deg(Math.atan2(rC[1], rC[0])) - init.chaserAps1Arg);
     let chaserUnwrappedDeg = chaserAngleDeg;
@@ -1121,7 +1130,7 @@ function simulate(params){
 
   return {
     params,
-    times, targetX, targetY, chaserX, chaserY, relV, relR, burnsApplied, markers,
+    times, targetX, targetY, chaserX, chaserY, relV, relR, relTheta, burnsApplied, markers,
     targetOE: {...targetOE, T_hr: targetOE.T/3600.0},
     chaserInitial: {...chaserOE, T_hr: chaserOE.T/3600.0},
     targetAps1Arg: init.targetAps1Arg,
@@ -1209,6 +1218,36 @@ function addApsideAxisTraces(traces, orbit){
   );
 }
 
+function findTargetInstances(data){
+  if(data.params.relMode !== 'curvilinear' || !data.relTheta || data.relTheta.length < 2) return [];
+
+  const minTheta = Math.min(...data.relTheta);
+  const maxTheta = Math.max(...data.relTheta);
+  const firstK = Math.ceil(minTheta / (2*Math.PI));
+  const lastK = Math.floor(maxTheta / (2*Math.PI));
+  const instances = [];
+
+  for(let k=firstK; k<=lastK; k++){
+    const targetTheta = k * 2*Math.PI;
+    for(let i=1; i<data.relTheta.length; i++){
+      const prev = data.relTheta[i-1];
+      const curr = data.relTheta[i];
+      if(!Number.isFinite(prev) || !Number.isFinite(curr) || prev === curr) continue;
+      const crosses = (prev <= targetTheta && curr >= targetTheta) || (prev >= targetTheta && curr <= targetTheta);
+      if(!crosses) continue;
+
+      const frac = (targetTheta - prev) / (curr - prev);
+      const x = data.relV[i-1] + frac * (data.relV[i] - data.relV[i-1]);
+      const time = data.times[i-1] + frac * (data.times[i] - data.times[i-1]);
+      if(time <= 0) break;
+      instances.push({k, x, time});
+      break;
+    }
+  }
+
+  return instances;
+}
+
 function plotData(data, animIdx=null){
   if(animIdx !== null){
     animIdx = Math.max(0, Math.min(data.times.length - 1, Math.floor(animIdx) || 0));
@@ -1266,6 +1305,7 @@ function plotData(data, animIdx=null){
   }, {responsive:true});
 
   const relativeTitle = data.params.relMode === 'lvlh' ? t('relativeTitleLvlh') : t('relativeTitleCurvilinear');
+  const targetInstances = findTargetInstances(data);
   const relativeTraces = [
     {x:data.relV, y:data.relR, mode:'lines', name:t('relativeTrajectory')},
     {x:[data.relV[0]], y:[data.relR[0]], mode:'markers', name:'Start'},
@@ -1282,13 +1322,37 @@ function plotData(data, animIdx=null){
   const yMin = Math.min(...data.relR, 0), yMax = Math.max(...data.relR, 0);
   const xPad = Math.max(1, Math.abs(xMax-xMin)*0.05);
   const yPad = Math.max(1, Math.abs(yMax-yMin)*0.05);
+  const yLineMin = yMin - yPad;
+  const yLineMax = yMax + yPad;
+
+  if(targetInstances.length > 0){
+    relativeTraces.push({
+      x:targetInstances.map(instance => instance.x),
+      y:targetInstances.map(() => 0),
+      mode:'markers',
+      name:t('targetInstances'),
+      marker:{symbol:'star-open', size:11, color:'#444'},
+      customdata:targetInstances.map(instance => [(instance.time/3600).toFixed(3), instance.k]),
+      hovertemplate:'t=%{customdata[0]} h<br>k=%{customdata[1]}<extra></extra>'
+    });
+  }
+
+  const targetInstanceShapes = targetInstances.map(instance => ({
+    type:'line',
+    x0:instance.x,
+    x1:instance.x,
+    y0:yLineMin,
+    y1:yLineMax,
+    line:{color:'rgba(80,80,80,0.42)', width:1, dash:'dash'}
+  }));
 
   Plotly.newPlot('relativePlot', relativeTraces, {
     title:relativeTitle,
     xaxis:{title:'V-bar / along-track (km)', autorange:'reversed', range:[xMax+xPad, xMin-xPad]},
     yaxis:{title:`R-bar / radial (km) [${t('positiveDown')}]`, autorange:'reversed', range:[yMax+yPad, yMin-yPad]},
     margin:{l:70,r:20,t:45,b:55},
-    showlegend:true
+    showlegend:true,
+    shapes:targetInstanceShapes
   }, {responsive:true});
 
   updateSummaryTable(data);
@@ -1400,6 +1464,15 @@ function setLocalPresets(presets){
   refreshPresetList();
 }
 
+function migratePresetNames(presets){
+  if(presets['Baen example'] && !presets["Terry Burlison's Example"]){
+    presets["Terry Burlison's Example"] = presets['Baen example'];
+    delete presets['Baen example'];
+    return true;
+  }
+  return false;
+}
+
 function normalizePresetPayload(data){
   if(!data || typeof data !== 'object') return {};
   if(data.presets && typeof data.presets === 'object') return data.presets;
@@ -1409,11 +1482,16 @@ function normalizePresetPayload(data){
 
 function seedInitialPresetsOnce(){
   if(localStorage.getItem(LOCAL_PRESET_KEY)){
+    const presets = getLocalPresets();
+    if(migratePresetNames(presets)){
+      localStorage.setItem(LOCAL_PRESET_KEY, JSON.stringify(presets));
+    }
     refreshPresetList();
     return;
   }
 
   const seed = normalizePresetPayload(INITIAL_PRESET_SEED);
+  migratePresetNames(seed);
   localStorage.setItem(LOCAL_PRESET_KEY, JSON.stringify(seed));
   refreshPresetList();
   const count = Object.keys(seed).length;
