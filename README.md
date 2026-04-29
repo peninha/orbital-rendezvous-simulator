@@ -28,7 +28,7 @@ The simulator is a single HTML file. It uses Plotly from a CDN to render the plo
 
 **Top-down orbital view** shows Earth, the orbits, and the Chaser trajectory. When an orbit is elliptical, the line of apsides shows the perigee-apogee direction.
 
-**Target-relative frame** shows the Chaser motion as seen from the Target. In curvilinear mode, vertical dashed lines indicate later radial passes by the Target along the simulated trajectory.
+**Target-relative frame** shows the Chaser motion as seen from the Target. In LVC (Local Vertical Curvilinear) mode, vertical dashed lines indicate later radial passes by the Target along the simulated trajectory.
 
 ## Presets
 
@@ -51,7 +51,7 @@ Important simplifications:
 
 ## Tips
 
-- Use curvilinear mode to understand the relation between orbital phase and radial distance.
+- Use LVC (Local Vertical Curvilinear) mode to understand the relation between orbital phase and radial distance.
 - Adjust an NC burn and watch how the relative trajectory changes after it.
 - Increase total simulation time to see future passes by the Target.
 - Double-click sliders to return to zero or to the minimum allowed value.
@@ -86,7 +86,7 @@ O simulador e um unico HTML. Ele usa Plotly via CDN para renderizar os graficos,
 
 **Vista orbital superior** mostra a Terra, as orbitas e a trajetoria do Chaser. Quando a orbita e eliptica, a linha das apsides indica a direcao perigeu-apogeu.
 
-**Frame relativo do Target** mostra o movimento do Chaser visto a partir do Target. No modo curvilinear, linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetoria simulada.
+**Frame relativo do Target** mostra o movimento do Chaser visto a partir do Target. No modo LVC (Local Vertical Curvilinear), linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetoria simulada.
 
 ## Presets
 
@@ -109,7 +109,7 @@ Algumas simplificacoes importantes:
 
 ## Dicas
 
-- Use o modo curvilinear para entender melhor a relacao entre fase orbital e distancia radial.
+- Use o modo LVC (Local Vertical Curvilinear) para entender melhor a relacao entre fase orbital e distancia radial.
 - Ajuste uma queima NC e observe como a trajetoria relativa muda depois dela.
 - Aumente o tempo total de simulacao para ver passagens futuras pelo Target.
 - De duplo clique em sliders para voltar ao zero ou ao menor valor permitido.

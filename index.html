@@ -128,7 +128,7 @@
       <li data-i18n="helpPresets">Presets salvos, importados ou criados ficam no navegador. Voc? pode remov?-los um por um e exportar a lista completa em JSON.</li>
       <li data-i18n-html="helpOrbits">Em <b>?rbita inicial do Target</b> e <b>?rbita inicial do Chaser</b>, marque <b>?rbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.</li>
       <li data-i18n-html="helpBurns">As queimas <b>NC</b> s?o disparadas quando o Chaser atinge <b>N voltas + fase</b>, usando como refer?ncia a dire??o do <b>perigeu do Chaser</b>.</li>
-      <li data-i18n="helpTargetInstances">No gráfico relativo curvilinear, as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.</li>
+      <li data-i18n="helpTargetInstances">No gráfico relativo LVC (Local Vertical Curvilinear), as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.</li>
       <li data-i18n-html="helpTerryExample">O preset <b>Terry Burlison's Example</b> ? inspirado nas fig. 8 e 9 do artigo de Terry Burlison.</li>
       <li data-i18n="helpSliders">D? duplo clique em qualquer slider para retornar ao zero. Quando o slider n?o permite zero, ele volta ao menor valor permitido.</li>
       <li data-i18n-html="helpGradient">No gr?fico inercial, a trajet?ria do Chaser usa um gradiente <b>preto ? azul</b> para indicar in?cio ? fim.</li>
@@ -286,7 +286,7 @@
         <div class="control">
           <label>Modo do gráfico relativo</label>
           <select id="relMode">
-            <option data-i18n="relModeCurvilinear" value="curvilinear" selected>Curvilinear (arco orbital + radial)</option>
+            <option data-i18n="relModeCurvilinear" value="curvilinear" selected>LVC (Local Vertical Curvilinear)</option>
             <option value="lvlh">LVLH linear (projeção vetorial local)</option>
           </select>
         </div>
@@ -346,7 +346,7 @@ const I18N = {
     helpPresets: 'Presets salvos, importados ou criados ficam no navegador. Você pode removê-los um por um e exportar a lista completa em JSON.',
     helpOrbits: 'Em <b>Órbita inicial do Target</b> e <b>Órbita inicial do Chaser</b>, marque <b>Órbita circular</b> para usar altitude + longitude verdadeira inicial. Desmarque para usar perigeu, apogeu, argumento do perigeu e anomalia verdadeira.',
     helpBurns: 'Cada queima <b>NC</b> é disparada quando o Chaser atinge <b>N voltas + fase</b>, usando como referência a direção do <b>perigeu do Chaser</b>. Use Δv positivo ou negativo para alterar o período orbital e observar como a trajetória relativa muda.',
-    helpTargetInstances: 'No gráfico relativo curvilinear, as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.',
+    helpTargetInstances: 'No gráfico relativo LVC (Local Vertical Curvilinear), as linhas verticais tracejadas indicam novas passagens radiais pelo Target ao longo da trajetória simulada.',
     helpTerryExample: 'O preset <b>Terry Burlison&apos;s Example</b> é inspirado nas fig. 8 e 9 do excelente artigo <a href="https://www.baen.com/rendezvous" target="_blank" rel="noopener">Rendezvous and Docking: A User’s Guide for Non Rocket Scientists</a>, em que Terry Burlison explica como funciona o rendezvous orbital. Recomendo ler o artigo para melhor usar esta ferramenta. Note, porém, que o exemplo da fig. 9 não bate com a descrição do texto e também não representa bem o que acontece na realidade: quando ocorrem as queimas de fase (NC), a trajetória oscilante, além de alterar a altura dos picos e vales, também sofre uma alteração no espaçamento entre as ondas, como este simulador mostra.',
     helpSliders: 'Dê duplo clique em qualquer slider para retornar ao zero. Quando o slider não permite zero, ele volta ao menor valor permitido.',
     helpGradient: 'No gráfico inercial, a trajetória do Chaser usa um gradiente <b>preto → azul</b> para indicar início → fim.',
@@ -376,7 +376,7 @@ const I18N = {
     dtLabel: 'Passo de integração dt (s)',
     timeWarpLabel: 'Time warp (simulação / tempo real)',
     relModeLabel: 'Modo do gráfico relativo',
-    relModeCurvilinear: 'Curvilinear (arco orbital + radial)',
+    relModeCurvilinear: 'LVC (Local Vertical Curvilinear)',
     relModeLvlh: 'LVLH linear (projeção vetorial local)',
     playButton: 'Play',
     pauseButton: 'Pause',
@@ -418,7 +418,7 @@ const I18N = {
     inertialTitle: 'Vista orbital superior',
     relativeTrajectory: 'Trajetória relativa',
     relativeTitleLvlh: 'Frame relativo do Target — LVLH linear',
-    relativeTitleCurvilinear: 'Frame relativo do Target — Curvilinear',
+    relativeTitleCurvilinear: 'Frame relativo do Target — LVC (Local Vertical Curvilinear)',
     positiveDown: 'positivo para baixo'
   },
   en: {
@@ -438,7 +438,7 @@ const I18N = {
     helpPresets: 'Saved, imported, or newly created presets are kept in the browser. You can remove them one by one and export the full list as JSON.',
     helpOrbits: 'In <b>Target initial orbit</b> and <b>Chaser initial orbit</b>, enable <b>Circular orbit</b> to use altitude + initial true longitude. Disable it to use perigee, apogee, argument of perigee, and true anomaly.',
     helpBurns: 'Each <b>NC</b> burn fires when the Chaser reaches <b>N revolutions + phase</b>, using the <b>Chaser perigee</b> direction as the reference. Use positive or negative Δv to change orbital period and watch the relative trajectory respond.',
-    helpTargetInstances: 'In the curvilinear relative plot, vertical dashed lines mark later radial passes by the Target along the simulated trajectory.',
+    helpTargetInstances: 'In the LVC (Local Vertical Curvilinear) relative plot, vertical dashed lines mark later radial passes by the Target along the simulated trajectory.',
     helpTerryExample: 'The <b>Terry Burlison&apos;s Example</b> preset is inspired by fig. 8 and 9 of Terry Burlison’s excellent article <a href="https://www.baen.com/rendezvous" target="_blank" rel="noopener">Rendezvous and Docking: A User’s Guide for Non Rocket Scientists</a>, where he explains how orbital rendezvous works. I recommend reading it to get more out of this tool. Note, however, that the fig. 9 example does not match the text description and does not fully represent what happens in reality: when phasing burns (NC) occur, the oscillating trajectory changes not only the height of its peaks and valleys, but also the spacing between waves, as this simulator shows.',
     helpSliders: 'Double-click any slider to return to zero. When a slider cannot reach zero, it returns to its minimum value.',
     helpGradient: 'In the inertial plot, the Chaser trajectory uses a <b>black → blue</b> gradient to show start → finish.',
@@ -468,7 +468,7 @@ const I18N = {
     dtLabel: 'Integration step dt (s)',
     timeWarpLabel: 'Time warp (simulation / real time)',
     relModeLabel: 'Relative plot mode',
-    relModeCurvilinear: 'Curvilinear (orbital arc + radial)',
+    relModeCurvilinear: 'LVC (Local Vertical Curvilinear)',
     relModeLvlh: 'LVLH linear (local vector projection)',
     playButton: 'Play',
     pauseButton: 'Pause',
@@ -510,7 +510,7 @@ const I18N = {
     inertialTitle: 'Top-down orbital view',
     relativeTrajectory: 'Relative trajectory',
     relativeTitleLvlh: 'Target relative frame — LVLH linear',
-    relativeTitleCurvilinear: 'Target relative frame — Curvilinear',
+    relativeTitleCurvilinear: 'Target relative frame — LVC (Local Vertical Curvilinear)',
     positiveDown: 'positive downward'
   }
 };
