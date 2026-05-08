@@ -6,6 +6,7 @@
   <title>Simulador de Rendezvous Orbital</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
+    html, body { max-width: 100%; overflow-x: hidden; }
     body { font-family: Arial, sans-serif; margin: 18px; line-height: 1.35; background: #fafafa; color: #222; }
     h1 { margin: 0; font-size: 30px; }
     .version { margin-top: 3px; color: #666; font-size: 12px; }
@@ -70,6 +71,32 @@
       .top-right-card { min-width: 0; }
       .preset-row-top { grid-template-columns: 1fr auto auto auto; }
       .graph-controls { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      body { margin: 10px; }
+      h1 { font-size: 24px; }
+      .card { padding: 12px; }
+      .row2 { grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; }
+      .preset-row-top { grid-template-columns: 1fr 1fr; }
+      .preset-row-top select { grid-column: 1 / -1; }
+
+      .plotbox {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+      #inertialPlot,
+      #relativePlot {
+        min-width: 680px;
+        height: 500px !important;
+      }
+
+      .summary-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #summaryTable { min-width: 760px; }
     }
   </style>
 </head>
@@ -680,6 +707,27 @@ let animationStartWallMs = null;
 let currentAnimIdx = 0;
 let elapsedSimSec = 0;
 let simulationTimerId = null;
+let plotResizeTimerId = null;
+let lastPlotLayoutIsMobile = null;
+
+function isMobilePlotLayout(){
+  if(window.matchMedia) return window.matchMedia('(max-width: 700px)').matches;
+  return window.innerWidth <= 700;
+}
+
+function getPlotLegendLayout(isMobile){
+  if(!isMobile) return {};
+  return {
+    legend:{
+      orientation:'h',
+      x:0,
+      xanchor:'left',
+      y:-0.24,
+      yanchor:'top',
+      font:{size:11}
+    }
+  };
+}
 
 function deg2rad(d){ return d*Math.PI/180.0; }
 function rad2deg(r){ return r*180.0/Math.PI; }
@@ -1253,6 +1301,13 @@ function plotData(data, animIdx=null){
     animIdx = Math.max(0, Math.min(data.times.length - 1, Math.floor(animIdx) || 0));
   }
 
+  const mobilePlot = isMobilePlotLayout();
+  lastPlotLayoutIsMobile = mobilePlot;
+  const legendLayout = getPlotLegendLayout(mobilePlot);
+  const inertialMargin = mobilePlot ? {l:56,r:18,t:45,b:145} : {l:60,r:20,t:45,b:55};
+  const relativeMargin = mobilePlot ? {l:62,r:18,t:45,b:145} : {l:70,r:20,t:45,b:55};
+  const plotConfig = {responsive:true, displaylogo:false};
+
   const theta = Array.from({length:361}, (_,i)=>i*Math.PI/180.0);
   const earthX = theta.map(t=>Re*Math.cos(t));
   const earthY = theta.map(t=>Re*Math.sin(t));
@@ -1300,9 +1355,10 @@ function plotData(data, animIdx=null){
     title:t('inertialTitle'),
     xaxis:{title:'x (km)', range:[-maxAbs,maxAbs]},
     yaxis:{title:'y (km)', scaleanchor:'x', scaleratio:1, range:[-maxAbs,maxAbs]},
-    margin:{l:60,r:20,t:45,b:55},
-    showlegend:true
-  }, {responsive:true});
+    margin:inertialMargin,
+    showlegend:true,
+    ...legendLayout
+  }, plotConfig);
 
   const relativeTitle = data.params.relMode === 'lvlh' ? t('relativeTitleLvlh') : t('relativeTitleCurvilinear');
   const targetInstances = findTargetInstances(data);
@@ -1350,12 +1406,33 @@ function plotData(data, animIdx=null){
     title:relativeTitle,
     xaxis:{title:'V-bar / along-track (km)', autorange:'reversed', range:[xMax+xPad, xMin-xPad]},
     yaxis:{title:`R-bar / radial (km) [${t('positiveDown')}]`, autorange:'reversed', range:[yMax+yPad, yMin-yPad]},
-    margin:{l:70,r:20,t:45,b:55},
+    margin:relativeMargin,
     showlegend:true,
+    ...legendLayout,
     shapes:targetInstanceShapes
-  }, {responsive:true});
+  }, plotConfig);
 
   updateSummaryTable(data);
+}
+
+function resizeExistingPlots(){
+  for(const plotId of ['inertialPlot', 'relativePlot']){
+    const plot = document.getElementById(plotId);
+    if(plot && plot.data) Plotly.Plots.resize(plot);
+  }
+}
+
+function handleViewportResize(){
+  clearTimeout(plotResizeTimerId);
+  plotResizeTimerId = setTimeout(() => {
+    if(!simData) return;
+    const mobileNow = isMobilePlotLayout();
+    if(lastPlotLayoutIsMobile !== mobileNow){
+      plotData(simData, currentAnimIdx);
+      return;
+    }
+    resizeExistingPlots();
+  }, 150);
 }
 
 function safePlotIndexFromElapsed(simSec){
@@ -1647,6 +1724,7 @@ window.onload = ()=>{
   initControls();
   seedInitialPresetsOnce();
   applyLanguage();
+  window.addEventListener('resize', handleViewportResize);
   runSimulation();
 };
 </script>
