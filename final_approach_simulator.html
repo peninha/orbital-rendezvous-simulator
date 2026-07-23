@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Aproximação Final e Docking</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3f6f8;
+      --card: #ffffff;
+      --ink: #17212b;
+      --muted: #5f6d78;
+      --line: #d8e0e6;
+      --blue: #1769aa;
+      --blue-soft: #eaf4fb;
+      --orange: #d97706;
+      --green: #18794e;
+      --red: #b42318;
+      --shadow: 0 3px 14px rgba(28, 45, 58, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.35;
+    }
+
+    .page { width: min(1780px, calc(100% - 32px)); margin: 0 auto; padding: 22px 0 36px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0; font-size: clamp(25px, 3vw, 36px); letter-spacing: -0.03em; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    p { margin: 6px 0 0; }
+    .subtitle { max-width: 900px; color: var(--muted); }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 15px;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 0.9fr) minmax(360px, 1.15fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .time-card { margin-top: 14px; }
+    .plots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .plot-card { padding: 8px; min-width: 0; }
+    .plot { width: 100%; height: 560px; }
+    .telemetry {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(110px, 1fr));
+      gap: 9px;
+      margin-top: 14px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+    .metric-label { color: var(--muted); font-size: 12px; margin-bottom: 3px; }
+    .metric-value { font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 700; white-space: nowrap; }
+
+    .field { margin-bottom: 11px; }
+    .field:last-child { margin-bottom: 0; }
+    label, .field-label { display: block; font-size: 13px; font-weight: 650; margin-bottom: 5px; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .pair { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 9px; align-items: center; }
+    .triple { display: grid; grid-template-columns: minmax(0, 1fr) 100px 94px; gap: 9px; align-items: center; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .checkbox-row label { margin: 0; }
+    input, select, button { font: inherit; }
+    input[type="number"], select {
+      width: 100%;
+      min-height: 36px;
+      padding: 6px 8px;
+      border: 1px solid #aebbc5;
+      border-radius: 7px;
+      background: white;
+      color: var(--ink);
+    }
+    input[type="range"] { width: 100%; accent-color: var(--blue); }
+    input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--blue); }
+    button {
+      min-height: 36px;
+      padding: 7px 12px;
+      border: 1px solid #9cabb7;
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 620;
+    }
+    button:hover { background: #f4f7f9; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(23, 105, 170, .24); outline-offset: 1px; }
+    button.primary { color: white; background: var(--blue); border-color: var(--blue); }
+    button.primary:hover { background: #11588f; }
+    button.danger { color: var(--red); border-color: #dfa5a0; }
+    button.icon { min-width: 48px; font-size: 18px; padding-inline: 10px; }
+    button.active { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+    button.small { min-height: 30px; padding: 4px 8px; font-size: 12px; }
+
+    .orbit-general { padding-top: 10px; border-top: 1px dashed var(--line); }
+    .hidden { display: none !important; }
+    .scenario-note {
+      background: #f8fbfd;
+      border: 1px solid #cddfe9;
+      border-radius: 9px;
+      color: #40515e;
+      font-size: 12px;
+      padding: 9px 10px;
+      margin-bottom: 12px;
+    }
+
+    .burn-axis {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .axis-heading { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-size: 13px; font-weight: 700; }
+    .axis-ends { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .burn-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .burn-total { color: var(--muted); font-size: 12px; margin-left: auto; }
+    .burn-preview-status {
+      min-height: 18px;
+      margin-top: 8px;
+      color: #6d28d9;
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .burn-preview-status.invalid { color: var(--red); }
+
+    .transport {
+      display: grid;
+      grid-template-columns: auto minmax(250px, 1fr) minmax(180px, 250px);
+      gap: 16px;
+      align-items: center;
+    }
+    .transport-buttons { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .timeline { min-width: 0; }
+    .timeline-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .time-readout { font-size: 19px; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .time-steps { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+    .time-steps button { min-height: 29px; font-size: 12px; padding: 3px 8px; }
+    .transport-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .transport-settings .field { margin: 0; }
+
+    .lower-grid { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(300px, .7fr); gap: 14px; margin-top: 14px; align-items: start; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; border-bottom: 1px solid #e6ebef; padding: 8px; white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; background: #f8fafb; }
+    .empty-row { color: var(--muted); text-align: center; padding: 18px; }
+    .status {
+      min-height: 40px;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: white;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .status.error { color: var(--red); border-color: #e6aaa5; background: #fff8f7; }
+    .status.success { color: var(--green); border-color: #a9d4bf; background: #f4fbf7; }
+
+    details.help { margin-bottom: 14px; }
+    details.help summary { cursor: pointer; font-weight: 700; }
+    details.help ul { margin-bottom: 0; padding-left: 22px; }
+
+    @media (max-width: 1250px) {
+      .config-grid { grid-template-columns: 1fr 1fr; }
+      .config-grid > :last-child { grid-column: 1 / -1; }
+      .telemetry { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 900px) {
+      header { flex-direction: column; }
+      .header-actions { justify-content: flex-start; }
+      .config-grid, .plots, .lower-grid { grid-template-columns: 1fr; }
+      .config-grid > :last-child { grid-column: auto; }
+      .transport { grid-template-columns: 1fr; }
+      .plot { height: 480px; }
+    }
+    @media (max-width: 620px) {
+      .page { width: min(100% - 18px, 1780px); padding-top: 12px; }
+      .telemetry { grid-template-columns: 1fr 1fr; }
+      .pair { grid-template-columns: minmax(0, 1fr) 86px; }
+      .triple { grid-template-columns: minmax(0, 1fr) 86px; }
+      .triple select { grid-column: 1 / -1; }
+      .plot { height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Simulador de Aproximação Final e Docking</h1>
+        <p class="subtitle">Prepare queimas nos eixos R-bar e V-bar, avance ou retroceda a linha do tempo e acompanhe a aproximação nas vistas inercial e LVC.</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" onclick="resetScenario()">Restaurar cenário inicial</button>
+        <button type="button" onclick="clearBurns()">Limpar manobras</button>
+        <button type="button" onclick="window.location.href='index.html'">Abrir simulador de rendezvous</button>
+      </div>
+    </header>
+
+    <details class="card help">
+      <summary>Como usar e convenções</summary>
+      <ul>
+        <li>Pause no instante desejado, ajuste as componentes radial e tangencial e clique em <b>Aplicar queima</b>.</li>
+        <li>R-bar positiva aponta para fora da Terra; V-bar positiva aponta no sentido prograde do Chaser.</li>
+        <li>Voltar no tempo não apaga manobras. Antes do instante da queima, ela ainda não afetou a trajetória; depois dele, já foi aplicada.</li>
+        <li>As linhas tracejadas mostram o futuro planejado e as linhas sólidas mostram a trajetória já percorrida.</li>
+        <li>O modelo é bidimensional, coplanar e considera apenas a gravidade central da Terra. As queimas são impulsivas.</li>
+      </ul>
+    </details>
+
+    <section class="config-grid">
+      <article class="card">
+        <h2>Órbita inicial do Target</h2>
+        <div class="checkbox-row">
+          <input id="targetCircular" type="checkbox" checked>
+          <label for="targetCircular">Órbita circular</label>
+        </div>
+        <div id="targetCircularFields">
+          <div class="field">
+            <label for="targetAlt">Altitude (km)</label>
+            <div class="pair">
+              <input id="targetAltSlider" type="range" min="100" max="10000" step="1" value="400">
+              <input id="targetAlt" type="number" min="100" max="10000" step="1" value="400">
+            </div>
+          </div>
+          <div class="field">
+            <label for="targetPhase">Longitude verdadeira inicial (°)</label>
+            <div class="pair">
+              <input id="targetPhaseSlider" type="range" min="-180" max="180" step="0.1" value="0">
+              <input id="targetPhase" type="number" min="-360" max="360" step="0.1" value="0">
+            </div>
+          </div>
+        </div>
+        <div id="targetGeneralFields" class="orbit-general hidden">
+          <div class="field">
+            <label for="targetPerigee">Altitude do perigeu (km)</label>
+            <div class="pair">
+              <input id="targetPerigeeSlider" type="range" min="100" max="10000" step="1" value="400">
+              <input id="targetPerigee" type="number" min="100" max="10000" step="1" value="400">
+            </div>
+          </div>
+          <div class="field">
+            <label for="targetApogee">Altitude do apogeu (km)</label>
+            <div class="pair">
+              <input id="targetApogeeSlider" type="range" min="100" max="10000" step="1" value="400">
+              <input id="targetApogee" type="number" min="100" max="10000" step="1" value="400">
+            </div>
+          </div>
+          <div class="field">
+            <label for="targetArgPerigee">Argumento do perigeu (°)</label>
+            <div class="pair">
+              <input id="targetArgPerigeeSlider" type="range" min="-180" max="180" step="0.1" value="0">
+              <input id="targetArgPerigee" type="number" min="-360" max="360" step="0.1" value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label for="targetTrueAnomaly">Anomalia verdadeira inicial (°)</label>
+            <div class="pair">
+              <input id="targetTrueAnomalySlider" type="range" min="0" max="360" step="0.1" value="0">
+              <input id="targetTrueAnomaly" type="number" min="-360" max="720" step="0.1" value="0">
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Órbita inicial do Chaser</h2>
+        <div class="scenario-note" id="scenarioNote">No cenário inicial, o Chaser está na R-bar exterior, a 1000 km de altitude, com velocidade tangencial igual à do Target.</div>
+        <div class="checkbox-row">
+          <input id="chaserCircular" type="checkbox">
+          <label for="chaserCircular">Órbita circular</label>
+        </div>
+        <div id="chaserCircularFields" class="hidden">
+          <div class="field">
+            <label for="chaserAlt">Altitude (km)</label>
+            <div class="pair">
+              <input id="chaserAltSlider" type="range" min="100" max="10000" step="1" value="1000">
+              <input id="chaserAlt" type="number" min="100" max="10000" step="1" value="1000">
+            </div>
+          </div>
+          <div class="field">
+            <label for="chaserPhase">Longitude verdadeira inicial (°)</label>
+            <div class="pair">
+              <input id="chaserPhaseSlider" type="range" min="-180" max="180" step="0.1" value="0">
+              <input id="chaserPhase" type="number" min="-360" max="360" step="0.1" value="0">
+            </div>
+          </div>
+        </div>
+        <div id="chaserGeneralFields" class="orbit-general">
+          <div class="field">
+            <label for="chaserPerigee">Altitude do perigeu (km)</label>
+            <div class="pair">
+              <input id="chaserPerigeeSlider" type="range" min="100" max="10000" step="1" value="1000">
+              <input id="chaserPerigee" type="number" min="100" max="10000" step="1" value="1000">
+            </div>
+          </div>
+          <div class="field">
+            <label for="chaserApogee">Altitude do apogeu (km)</label>
+            <div class="pair">
+              <input id="chaserApogeeSlider" type="range" min="100" max="10000" step="1" value="2430">
+              <input id="chaserApogee" type="number" min="100" max="10000" step="1" value="2430">
+            </div>
+          </div>
+          <div class="field">
+            <label for="chaserArgPerigee">Argumento do perigeu (°)</label>
+            <div class="pair">
+              <input id="chaserArgPerigeeSlider" type="range" min="-180" max="180" step="0.1" value="0">
+              <input id="chaserArgPerigee" type="number" min="-360" max="360" step="0.1" value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label for="chaserTrueAnomaly">Anomalia verdadeira inicial (°)</label>
+            <div class="pair">
+              <input id="chaserTrueAnomalySlider" type="range" min="0" max="360" step="0.1" value="0">
+              <input id="chaserTrueAnomaly" type="number" min="-360" max="720" step="0.1" value="0">
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Preparar nova queima</h2>
+        <div class="scenario-note">A manobra será aplicada ao Chaser no tempo atualmente selecionado. Valores positivos significam <b>Out</b> e <b>Prograde</b>.</div>
+        <div class="burn-axis">
+          <div class="axis-heading"><span>R-bar — Radial</span><span id="radialBurnDisplay">0,0 m/s</span></div>
+          <div class="triple">
+            <input id="radialBurn" type="range" min="-500" max="500" step="0.1" value="0" aria-label="Delta-v radial">
+            <input id="radialBurnNumber" type="number" min="-5000" max="5000" step="0.1" value="0" aria-label="Delta-v radial em metros por segundo">
+            <select id="radialScale" aria-label="Escala radial">
+              <option value="10">±10 m/s</option>
+              <option value="100">±100 m/s</option>
+              <option value="500" selected>±500 m/s</option>
+              <option value="2000">±2000 m/s</option>
+            </select>
+          </div>
+          <div class="axis-ends"><span>In</span><span>Out</span></div>
+        </div>
+        <div class="burn-axis">
+          <div class="axis-heading"><span>V-bar — Tangencial</span><span id="tangentialBurnDisplay">0,0 m/s</span></div>
+          <div class="triple">
+            <input id="tangentialBurn" type="range" min="-500" max="500" step="0.1" value="0" aria-label="Delta-v tangencial">
+            <input id="tangentialBurnNumber" type="number" min="-5000" max="5000" step="0.1" value="0" aria-label="Delta-v tangencial em metros por segundo">
+            <select id="tangentialScale" aria-label="Escala tangencial">
+              <option value="10">±10 m/s</option>
+              <option value="100">±100 m/s</option>
+              <option value="500" selected>±500 m/s</option>
+              <option value="2000">±2000 m/s</option>
+            </select>
+          </div>
+          <div class="axis-ends"><span>Retrograde</span><span>Prograde</span></div>
+        </div>
+        <div class="burn-actions">
+          <button class="primary" type="button" onclick="applyBurn()">Aplicar queima no tempo atual</button>
+          <button type="button" onclick="zeroBurnControls()">Zerar sliders</button>
+          <span class="burn-total" id="burnTotal">Δv total: 0,0 m/s</span>
+        </div>
+        <div id="burnPreviewStatus" class="burn-preview-status" aria-live="polite"></div>
+      </article>
+    </section>
+
+    <section class="card time-card">
+      <div class="transport">
+        <div class="transport-buttons" aria-label="Controles de reprodução">
+          <button id="backButton" class="icon" type="button" onclick="play(-1)" title="Reproduzir para trás">◀</button>
+          <button id="pauseButton" class="icon active" type="button" onclick="pause()" title="Pausar">❚❚</button>
+          <button id="forwardButton" class="icon" type="button" onclick="play(1)" title="Reproduzir para frente">▶</button>
+        </div>
+        <div class="timeline">
+          <div class="timeline-top">
+            <span class="field-label">Linha do tempo</span>
+            <span class="time-readout" id="timeReadout">00:00:00</span>
+          </div>
+          <input id="timeSlider" type="range" min="0" max="21600" step="5" value="0" aria-label="Tempo da simulação">
+          <div class="time-steps">
+            <button type="button" onclick="stepTime(-600)">−10 min</button>
+            <button type="button" onclick="stepTime(-60)">−60 s</button>
+            <button type="button" onclick="stepTime(-10)">−10 s</button>
+            <button type="button" onclick="stepTime(10)">+10 s</button>
+            <button type="button" onclick="stepTime(60)">+60 s</button>
+            <button type="button" onclick="stepTime(600)">+10 min</button>
+          </div>
+        </div>
+        <div class="transport-settings">
+          <div class="field">
+            <label for="timeWarp">Time warp</label>
+            <input id="timeWarp" type="number" min="0.1" max="10000" step="1" value="120">
+          </div>
+          <div class="field">
+            <label for="lvcScale">Escala LVC</label>
+            <select id="lvcScale">
+              <option value="full" selected>Trajetória completa</option>
+              <option value="100">±100 km</option>
+              <option value="20">±20 km</option>
+              <option value="5">±5 km</option>
+              <option value="1">±1 km</option>
+              <option value="0.1">±100 m</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="telemetry" aria-label="Telemetria relativa">
+      <div class="metric"><div class="metric-label">Distância</div><div class="metric-value" id="distanceMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Velocidade relativa</div><div class="metric-value" id="relativeSpeedMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Closing rate</div><div class="metric-value" id="closingRateMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Posição V-bar</div><div class="metric-value" id="vbarMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Posição R-bar</div><div class="metric-value" id="rbarMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Vel. V-bar</div><div class="metric-value" id="vbarVelocityMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Vel. R-bar</div><div class="metric-value" id="rbarVelocityMetric">—</div></div>
+      <div class="metric"><div class="metric-label">Altitude do Chaser</div><div class="metric-value" id="chaserAltitudeMetric">—</div></div>
+    </section>
+
+    <section class="plots">
+      <article class="card plot-card"><div id="inertialPlot" class="plot" aria-label="Vista superior das órbitas"></div></article>
+      <article class="card plot-card"><div id="relativePlot" class="plot" aria-label="Gráfico relativo LVC"></div></article>
+    </section>
+
+    <section class="lower-grid">
+      <article class="card">
+        <h2>Linha do tempo de manobras</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Manobra</th><th>Tempo</th><th>R-bar (m/s)</th><th>V-bar (m/s)</th><th>Δv (m/s)</th><th></th></tr></thead>
+            <tbody id="burnTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h2>Parâmetros da simulação</h2>
+        <div class="field">
+          <label for="durationHours">Duração total (horas)</label>
+          <div class="pair">
+            <input id="durationHoursSlider" type="range" min="0.25" max="24" step="0.25" value="6">
+            <input id="durationHours" type="number" min="0.25" max="72" step="0.25" value="6">
+          </div>
+        </div>
+        <div class="field">
+          <label for="integrationStep">Passo de integração (s)</label>
+          <div class="pair">
+            <input id="integrationStepSlider" type="range" min="1" max="60" step="1" value="5">
+            <input id="integrationStep" type="number" min="0.5" max="120" step="0.5" value="5">
+          </div>
+          <div class="hint">As manobras e o cursor de tempo são ajustados ao passo de integração.</div>
+        </div>
+      </article>
+    </section>
+
+    <div id="status" class="status" role="status">Preparando simulação…</div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const MU = 398600.4418;
+    const EARTH_RADIUS = 6378.137;
+    const MAX_STEPS = 120000;
+    const PLOT_POINT_LIMIT = 4500;
+
+    let simulation = null;
+    let previewSimulation = null;
+    let burns = [];
+    let nextBurnId = 1;
+    let currentIndex = 0;
+    let playbackDirection = 0;
+    let playbackFrameId = null;
+    let playbackAnchorWall = 0;
+    let playbackAnchorTime = 0;
+    let lastPlotWall = 0;
+    let recomputeTimer = null;
+    let previewTimer = null;
+
+    const byId = id => document.getElementById(id);
+    const num = id => Number.parseFloat(byId(id).value);
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+    const mul = (s, v) => [s * v[0], s * v[1]];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+    const norm = v => Math.hypot(v[0], v[1]);
+    const degToRad = degrees => degrees * Math.PI / 180;
+
+    function setStatus(message, type = '') {
+      const el = byId('status');
+      el.textContent = message;
+      el.className = `status ${type}`.trim();
+    }
+
+    function formatNumber(value, digits = 1) {
+      if (!Number.isFinite(value)) return '—';
+      return value.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
+
+    function formatTime(seconds) {
+      const sign = seconds < 0 ? '−' : '';
+      let total = Math.max(0, Math.round(Math.abs(seconds)));
+      const hours = Math.floor(total / 3600);
+      total -= hours * 3600;
+      const minutes = Math.floor(total / 60);
+      const secs = total - minutes * 60;
+      return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function formatDistance(km) {
+      if (!Number.isFinite(km)) return '—';
+      if (Math.abs(km) < 1) return `${formatNumber(km * 1000, 1)} m`;
+      return `${formatNumber(km, Math.abs(km) < 10 ? 3 : 1)} km`;
+    }
+
+    function wrapPi(angle) {
+      let result = angle;
+      while (result > Math.PI) result -= 2 * Math.PI;
+      while (result < -Math.PI) result += 2 * Math.PI;
+      return result;
+    }
+
+    function acceleration(r) {
+      const radius = norm(r);
+      if (radius <= EARTH_RADIUS) throw new Error('Uma das trajetórias interceptou a Terra. Revise a órbita ou as manobras.');
+      return mul(-MU / Math.pow(radius, 3), r);
+    }
+
+    function rk4Step(r, v, step) {
+      const k1r = v;
+      const k1v = acceleration(r);
+      const k2r = add(v, mul(step / 2, k1v));
+      const k2v = acceleration(add(r, mul(step / 2, k1r)));
+      const k3r = add(v, mul(step / 2, k2v));
+      const k3v = acceleration(add(r, mul(step / 2, k2r)));
+      const k4r = add(v, mul(step, k3v));
+      const k4v = acceleration(add(r, mul(step, k3r)));
+      const rNew = add(r, mul(step / 6, add(add(k1r, mul(2, k2r)), add(mul(2, k3r), k4r))));
+      const vNew = add(v, mul(step / 6, add(add(k1v, mul(2, k2v)), add(mul(2, k3v), k4v))));
+      return [rNew, vNew];
+    }
+
+    function circularState(altitude, longitudeDegrees) {
+      const radius = EARTH_RADIUS + altitude;
+      const theta = degToRad(longitudeDegrees);
+      const radial = [Math.cos(theta), Math.sin(theta)];
+      const tangential = [-Math.sin(theta), Math.cos(theta)];
+      return [mul(radius, radial), mul(Math.sqrt(MU / radius), tangential)];
+    }
+
+    function apsidesState(perigeeAltitude, apogeeAltitude, argumentDegrees, anomalyDegrees) {
+      const rp = EARTH_RADIUS + Math.min(perigeeAltitude, apogeeAltitude);
+      const ra = EARTH_RADIUS + Math.max(perigeeAltitude, apogeeAltitude);
+      const semiMajor = (rp + ra) / 2;
+      const eccentricity = (ra - rp) / (ra + rp);
+      const anomaly = degToRad(anomalyDegrees);
+      const parameter = semiMajor * (1 - eccentricity * eccentricity);
+      const radius = parameter / (1 + eccentricity * Math.cos(anomaly));
+      const theta = degToRad(argumentDegrees) + anomaly;
+      const radial = [Math.cos(theta), Math.sin(theta)];
+      const tangential = [-Math.sin(theta), Math.cos(theta)];
+      const factor = Math.sqrt(MU / parameter);
+      const radialVelocity = factor * eccentricity * Math.sin(anomaly);
+      const tangentialVelocity = factor * (1 + eccentricity * Math.cos(anomaly));
+      return [mul(radius, radial), add(mul(radialVelocity, radial), mul(tangentialVelocity, tangential))];
+    }
+
+    function stateFromControls(prefix) {
+      if (byId(`${prefix}Circular`).checked) {
+        return circularState(num(`${prefix}Alt`), num(`${prefix}Phase`));
+      }
+      return apsidesState(
+        num(`${prefix}Perigee`),
+        num(`${prefix}Apogee`),
+        num(`${prefix}ArgPerigee`),
+        num(`${prefix}TrueAnomaly`)
+      );
+    }
+
+    function orbitalElements(r, v) {
+      const radius = norm(r);
+      const speed = norm(v);
+      const energy = speed * speed / 2 - MU / radius;
+      const semiMajor = -MU / (2 * energy);
+      const h = r[0] * v[1] - r[1] * v[0];
+      const eccentricityVector = [v[1] * h / MU - r[0] / radius, -v[0] * h / MU - r[1] / radius];
+      const eccentricity = norm(eccentricityVector);
+      return { semiMajor, eccentricity };
+    }
+
+    function readParameters() {
+      const durationHours = clamp(num('durationHours') || 0.25, 0.25, 72);
+      const integrationStep = clamp(num('integrationStep') || 5, 0.5, 120);
+      const steps = Math.floor(durationHours * 3600 / integrationStep) + 1;
+      if (steps > MAX_STEPS) {
+        throw new Error(`A combinação de duração e passo gera ${steps.toLocaleString('pt-BR')} pontos. Aumente o passo de integração.`);
+      }
+      return { durationHours, integrationStep, steps };
+    }
+
+    function localFrame(r, v) {
+      const radius = norm(r);
+      const radial = mul(1 / radius, r);
+      const angularMomentum = r[0] * v[1] - r[1] * v[0];
+      const direction = angularMomentum >= 0 ? 1 : -1;
+      const tangential = direction > 0 ? [-radial[1], radial[0]] : [radial[1], -radial[0]];
+      return { radial, tangential, angularMomentum };
+    }
+
+    function simulate(burnList = burns) {
+      const params = readParameters();
+      let [rT, vT] = stateFromControls('target');
+      let [rC, vC] = stateFromControls('chaser');
+
+      const result = {
+        params,
+        times: [],
+        targetX: [], targetY: [], chaserX: [], chaserY: [],
+        targetVx: [], targetVy: [], chaserVx: [], chaserVy: [],
+        relV: [], relR: [], relVVelocity: [], relRVelocity: [],
+        distance: [], relativeSpeed: [], closingRate: [],
+        burnMarkers: []
+      };
+
+      const burnMap = new Map();
+      for (const burn of burnList) {
+        const index = clamp(Math.round(burn.time / params.integrationStep), 0, params.steps - 1);
+        if (!burnMap.has(index)) burnMap.set(index, []);
+        burnMap.get(index).push(burn);
+      }
+
+      let previousTargetTheta = null;
+      let previousChaserTheta = null;
+      let relativeTheta = 0;
+
+      for (let i = 0; i < params.steps; i += 1) {
+        const scheduled = burnMap.get(i) || [];
+        for (const burn of scheduled) {
+          const frame = localFrame(rC, vC);
+          vC = add(vC, add(mul(burn.radial / 1000, frame.radial), mul(burn.tangential / 1000, frame.tangential)));
+        }
+
+        const time = i * params.integrationStep;
+        const targetFrame = localFrame(rT, vT);
+        const dr = sub(rC, rT);
+        const dv = sub(vC, vT);
+        const targetTheta = Math.atan2(rT[1], rT[0]);
+        const chaserTheta = Math.atan2(rC[1], rC[0]);
+
+        if (i === 0) {
+          relativeTheta = wrapPi(chaserTheta - targetTheta);
+        } else {
+          relativeTheta += wrapPi(chaserTheta - previousChaserTheta) - wrapPi(targetTheta - previousTargetTheta);
+        }
+        previousTargetTheta = targetTheta;
+        previousChaserTheta = chaserTheta;
+
+        const targetRadius = norm(rT);
+        const chaserRadius = norm(rC);
+        const targetOmega = targetFrame.angularMomentum / (targetRadius * targetRadius);
+        const omegaCrossDr = [-targetOmega * dr[1], targetOmega * dr[0]];
+        const rotatingVelocity = sub(dv, omegaCrossDr);
+        const distance = norm(dr);
+        const inertialClosingRate = distance > 0 ? -dot(dr, dv) / distance : 0;
+
+        result.times.push(time);
+        result.targetX.push(rT[0]); result.targetY.push(rT[1]);
+        result.chaserX.push(rC[0]); result.chaserY.push(rC[1]);
+        result.targetVx.push(vT[0]); result.targetVy.push(vT[1]);
+        result.chaserVx.push(vC[0]); result.chaserVy.push(vC[1]);
+        result.relV.push(targetRadius * relativeTheta);
+        result.relR.push(chaserRadius - targetRadius);
+        result.relVVelocity.push(dot(rotatingVelocity, targetFrame.tangential) * 1000);
+        result.relRVelocity.push(dot(rotatingVelocity, targetFrame.radial) * 1000);
+        result.distance.push(distance);
+        result.relativeSpeed.push(norm(rotatingVelocity) * 1000);
+        result.closingRate.push(inertialClosingRate * 1000);
+
+        for (const burn of scheduled) {
+          result.burnMarkers.push({
+            burn,
+            index: i,
+            x: rC[0], y: rC[1],
+            relV: result.relV[i], relR: result.relR[i]
+          });
+        }
+
+        if (i < params.steps - 1) {
+          try {
+            [rT, vT] = rk4Step(rT, vT, params.integrationStep);
+          } catch (error) {
+            throw new Error(`O Target interceptou a Terra próximo de t = ${formatTime(time + params.integrationStep)}.`);
+          }
+          try {
+            [rC, vC] = rk4Step(rC, vC, params.integrationStep);
+          } catch (error) {
+            throw new Error(`O Chaser interceptou a Terra próximo de t = ${formatTime(time + params.integrationStep)}.`);
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function decimate(xs, ys, maxPoints = PLOT_POINT_LIMIT) {
+      if (xs.length <= maxPoints) return { x: xs, y: ys };
+      const stride = Math.ceil(xs.length / maxPoints);
+      const x = [], y = [];
+      for (let i = 0; i < xs.length; i += stride) {
+        x.push(xs[i]); y.push(ys[i]);
+      }
+      if (x[x.length - 1] !== xs[xs.length - 1] || y[y.length - 1] !== ys[ys.length - 1]) {
+        x.push(xs[xs.length - 1]); y.push(ys[ys.length - 1]);
+      }
+      return { x, y };
+    }
+
+    function traversed(xs, ys) {
+      return decimate(xs.slice(0, currentIndex + 1), ys.slice(0, currentIndex + 1));
+    }
+
+    function futureFromCurrent(xs, ys) {
+      return decimate(xs.slice(currentIndex), ys.slice(currentIndex));
+    }
+
+    function plotMargins() {
+      return window.innerWidth < 620 ? { l: 55, r: 15, t: 50, b: 75 } : { l: 65, r: 20, t: 52, b: 58 };
+    }
+
+    function renderPlots() {
+      if (!simulation || typeof Plotly === 'undefined') return;
+
+      const earthAngles = Array.from({ length: 181 }, (_, i) => i * 2 * Math.PI / 180);
+      const earthX = earthAngles.map(angle => EARTH_RADIUS * Math.cos(angle));
+      const earthY = earthAngles.map(angle => EARTH_RADIUS * Math.sin(angle));
+      const targetPlan = decimate(simulation.targetX, simulation.targetY);
+      const chaserPlan = decimate(simulation.chaserX, simulation.chaserY);
+      const targetDone = traversed(simulation.targetX, simulation.targetY);
+      const chaserDone = traversed(simulation.chaserX, simulation.chaserY);
+      const completedMarkers = simulation.burnMarkers.filter(marker => marker.index <= currentIndex);
+      const previewInertial = previewSimulation
+        ? futureFromCurrent(previewSimulation.chaserX, previewSimulation.chaserY)
+        : null;
+
+      let maxAbs = EARTH_RADIUS * 1.1;
+      for (let i = 0; i < simulation.targetX.length; i += 1) {
+        maxAbs = Math.max(maxAbs, Math.abs(simulation.targetX[i]), Math.abs(simulation.targetY[i]), Math.abs(simulation.chaserX[i]), Math.abs(simulation.chaserY[i]));
+      }
+      if (previewSimulation) {
+        for (let i = currentIndex; i < previewSimulation.chaserX.length; i += 1) {
+          maxAbs = Math.max(maxAbs, Math.abs(previewSimulation.chaserX[i]), Math.abs(previewSimulation.chaserY[i]));
+        }
+      }
+      maxAbs *= 1.06;
+
+      const inertialTraces = [
+        { x: earthX, y: earthY, mode: 'lines', fill: 'toself', fillcolor: 'rgba(88, 169, 226, .42)', line: { color: '#4f9bd1', width: 1 }, name: 'Terra', hoverinfo: 'skip' },
+        { x: targetPlan.x, y: targetPlan.y, mode: 'lines', name: 'Target — futuro', line: { color: 'rgba(23,105,170,.35)', width: 1.5, dash: 'dot' } },
+        { x: chaserPlan.x, y: chaserPlan.y, mode: 'lines', name: 'Chaser — futuro', line: { color: 'rgba(217,119,6,.35)', width: 1.5, dash: 'dot' } },
+        { x: targetDone.x, y: targetDone.y, mode: 'lines', name: 'Target — percorrido', line: { color: '#1769aa', width: 2.5 } },
+        { x: chaserDone.x, y: chaserDone.y, mode: 'lines', name: 'Chaser — percorrido', line: { color: '#d97706', width: 2.5 } },
+        { x: completedMarkers.map(marker => marker.x), y: completedMarkers.map(marker => marker.y), text: completedMarkers.map(marker => marker.burn.name), mode: 'markers+text', textposition: 'top center', name: 'Queimas', marker: { symbol: 'x', size: 10, color: '#7c3aed' } },
+        { x: [simulation.targetX[currentIndex]], y: [simulation.targetY[currentIndex]], mode: 'markers', name: 'Target agora', marker: { size: 11, color: '#1769aa' } },
+        { x: [simulation.chaserX[currentIndex]], y: [simulation.chaserY[currentIndex]], mode: 'markers', name: 'Chaser agora', marker: { size: 11, color: '#d97706' } }
+      ];
+      if (previewInertial) {
+        inertialTraces.splice(5, 0, {
+          x: previewInertial.x,
+          y: previewInertial.y,
+          mode: 'lines',
+          name: 'Prévia da queima',
+          line: { color: '#7c3aed', width: 2.5, dash: 'dash' }
+        });
+      }
+
+      Plotly.react('inertialPlot', inertialTraces, {
+        title: { text: 'Vista superior — Frame inercial', font: { size: 18 } },
+        xaxis: { title: 'x (km)', range: [-maxAbs, maxAbs], zeroline: false },
+        yaxis: { title: 'y (km)', range: [-maxAbs, maxAbs], scaleanchor: 'x', scaleratio: 1, zeroline: false },
+        margin: plotMargins(),
+        paper_bgcolor: '#fff', plot_bgcolor: '#fff',
+        legend: { orientation: window.innerWidth < 900 ? 'h' : 'v', font: { size: 11 } },
+        hovermode: 'closest'
+      }, { responsive: true, displaylogo: false, scrollZoom: true });
+
+      const relativePlan = decimate(simulation.relV, simulation.relR);
+      const relativeDone = traversed(simulation.relV, simulation.relR);
+      const previewRelative = previewSimulation
+        ? futureFromCurrent(previewSimulation.relV, previewSimulation.relR)
+        : null;
+      const relativeTraces = [
+        { x: relativePlan.x, y: relativePlan.y, mode: 'lines', name: 'Futuro planejado', line: { color: 'rgba(95,109,120,.55)', width: 1.5, dash: 'dot' } },
+        { x: relativeDone.x, y: relativeDone.y, mode: 'lines', name: 'Trajetória percorrida', line: { color: '#1769aa', width: 3 } },
+        { x: simulation.burnMarkers.map(marker => marker.relV), y: simulation.burnMarkers.map(marker => marker.relR), text: simulation.burnMarkers.map(marker => marker.burn.name), mode: 'markers+text', textposition: 'top center', name: 'Queimas', marker: { symbol: 'x', size: 10, color: '#7c3aed' } },
+        { x: [0], y: [0], mode: 'markers', name: 'Target', marker: { symbol: 'star', size: 13, color: '#18794e' } },
+        { x: [simulation.relV[currentIndex]], y: [simulation.relR[currentIndex]], mode: 'markers', name: 'Chaser agora', marker: { size: 12, color: '#d97706', line: { color: '#8f4f06', width: 1 } } }
+      ];
+      if (previewRelative) {
+        relativeTraces.splice(2, 0, {
+          x: previewRelative.x,
+          y: previewRelative.y,
+          mode: 'lines',
+          name: 'Prévia da queima',
+          line: { color: '#7c3aed', width: 2.5, dash: 'dash' }
+        });
+      }
+
+      const scaleChoice = byId('lvcScale').value;
+      let xaxis = { title: 'V-bar / along-track (km)  [ + prograde ]', zeroline: true, zerolinecolor: '#b7c2ca' };
+      let yaxis = { title: 'R-bar / radial (km)  [ + out ]', zeroline: true, zerolinecolor: '#b7c2ca', scaleanchor: 'x', scaleratio: 1 };
+      if (scaleChoice !== 'full') {
+        const halfRange = Number(scaleChoice);
+        const xNow = simulation.relV[currentIndex];
+        const yNow = simulation.relR[currentIndex];
+        xaxis = { ...xaxis, range: [xNow - halfRange, xNow + halfRange] };
+        yaxis = { ...yaxis, range: [yNow - halfRange, yNow + halfRange] };
+      }
+
+      Plotly.react('relativePlot', relativeTraces, {
+        title: { text: 'Perseguição no frame LVC do Target', font: { size: 18 } },
+        xaxis,
+        yaxis,
+        margin: plotMargins(),
+        paper_bgcolor: '#fff', plot_bgcolor: '#fff',
+        legend: { orientation: window.innerWidth < 900 ? 'h' : 'v', font: { size: 11 } },
+        hovermode: 'closest'
+      }, { responsive: true, displaylogo: false, scrollZoom: true });
+    }
+
+    function updateTelemetry() {
+      if (!simulation) return;
+      const i = currentIndex;
+      const rC = [simulation.chaserX[i], simulation.chaserY[i]];
+      byId('timeReadout').textContent = formatTime(simulation.times[i]);
+      byId('timeSlider').value = simulation.times[i];
+      byId('distanceMetric').textContent = formatDistance(simulation.distance[i]);
+      byId('relativeSpeedMetric').textContent = `${formatNumber(simulation.relativeSpeed[i], 2)} m/s`;
+      byId('closingRateMetric').textContent = `${formatNumber(simulation.closingRate[i], 2)} m/s`;
+      byId('vbarMetric').textContent = formatDistance(simulation.relV[i]);
+      byId('rbarMetric').textContent = formatDistance(simulation.relR[i]);
+      byId('vbarVelocityMetric').textContent = `${formatNumber(simulation.relVVelocity[i], 2)} m/s`;
+      byId('rbarVelocityMetric').textContent = `${formatNumber(simulation.relRVelocity[i], 2)} m/s`;
+      byId('chaserAltitudeMetric').textContent = `${formatNumber(norm(rC) - EARTH_RADIUS, 1)} km`;
+    }
+
+    function updatePlaybackButtons() {
+      byId('backButton').classList.toggle('active', playbackDirection < 0);
+      byId('pauseButton').classList.toggle('active', playbackDirection === 0);
+      byId('forwardButton').classList.toggle('active', playbackDirection > 0);
+    }
+
+    function setCurrentTime(seconds, redraw = true, refreshPreview = true) {
+      if (!simulation) return;
+      const lastIndex = simulation.times.length - 1;
+      currentIndex = clamp(Math.round(seconds / simulation.params.integrationStep), 0, lastIndex);
+      updateTelemetry();
+      if (redraw) renderPlots();
+      if (refreshPreview) scheduleBurnPreview(false);
+    }
+
+    function playbackTick(now) {
+      if (!simulation || playbackDirection === 0) return;
+      const warp = clamp(num('timeWarp') || 1, 0.1, 10000);
+      const elapsedWall = (now - playbackAnchorWall) / 1000;
+      const desiredTime = playbackAnchorTime + playbackDirection * elapsedWall * warp;
+      const endTime = simulation.times[simulation.times.length - 1];
+      setCurrentTime(clamp(desiredTime, 0, endTime), false, false);
+
+      if (now - lastPlotWall >= 90) {
+        renderPlots();
+        lastPlotWall = now;
+      }
+
+      if (desiredTime <= 0 || desiredTime >= endTime) {
+        pause();
+        renderPlots();
+        return;
+      }
+      playbackFrameId = requestAnimationFrame(playbackTick);
+    }
+
+    function play(direction) {
+      if (!simulation) return;
+      if (playbackFrameId !== null) cancelAnimationFrame(playbackFrameId);
+      clearBurnPreview(true);
+      playbackDirection = direction < 0 ? -1 : 1;
+      playbackAnchorWall = performance.now();
+      playbackAnchorTime = simulation.times[currentIndex];
+      lastPlotWall = 0;
+      updatePlaybackButtons();
+      playbackFrameId = requestAnimationFrame(playbackTick);
+      setStatus(playbackDirection > 0 ? 'Reproduzindo para frente.' : 'Reproduzindo para trás.');
+    }
+
+    function pause(announce = true) {
+      playbackDirection = 0;
+      if (playbackFrameId !== null) cancelAnimationFrame(playbackFrameId);
+      playbackFrameId = null;
+      updatePlaybackButtons();
+      if (announce && simulation) {
+        setStatus(`Pausado em t = ${formatTime(simulation.times[currentIndex])}.`);
+        scheduleBurnPreview(false);
+      }
+    }
+
+    function stepTime(seconds) {
+      pause(false);
+      if (!simulation) return;
+      setCurrentTime(simulation.times[currentIndex] + seconds);
+      setStatus(`Tempo ajustado para ${formatTime(simulation.times[currentIndex])}.`);
+    }
+
+    function updateBurnReadout() {
+      const radial = num('radialBurnNumber') || 0;
+      const tangential = num('tangentialBurnNumber') || 0;
+      byId('radialBurnDisplay').textContent = `${formatNumber(radial, 1)} m/s`;
+      byId('tangentialBurnDisplay').textContent = `${formatNumber(tangential, 1)} m/s`;
+      byId('burnTotal').textContent = `Δv total: ${formatNumber(Math.hypot(radial, tangential), 1)} m/s`;
+    }
+
+    function preparedBurn() {
+      if (!simulation) return null;
+      const radial = num('radialBurnNumber') || 0;
+      const tangential = num('tangentialBurnNumber') || 0;
+      if (Math.hypot(radial, tangential) < 1e-9) return null;
+      return {
+        id: Number.MAX_SAFE_INTEGER,
+        name: 'Prévia',
+        time: simulation.times[currentIndex],
+        radial,
+        tangential
+      };
+    }
+
+    function clearBurnPreview(redraw = true) {
+      clearTimeout(previewTimer);
+      previewTimer = null;
+      previewSimulation = null;
+      const previewStatus = byId('burnPreviewStatus');
+      previewStatus.textContent = '';
+      previewStatus.classList.remove('invalid');
+      if (redraw && simulation) renderPlots();
+    }
+
+    function refreshBurnPreview() {
+      previewTimer = null;
+      const candidate = preparedBurn();
+      const previewStatus = byId('burnPreviewStatus');
+      if (!candidate) {
+        previewSimulation = null;
+        previewStatus.textContent = '';
+        previewStatus.classList.remove('invalid');
+        if (simulation) renderPlots();
+        return;
+      }
+
+      try {
+        const previewBurns = [...burns, candidate].sort((a, b) => a.time - b.time || a.id - b.id);
+        previewSimulation = simulate(previewBurns);
+        previewStatus.textContent = `Prévia tracejada para uma queima em t = ${formatTime(candidate.time)}.`;
+        previewStatus.classList.remove('invalid');
+      } catch (error) {
+        previewSimulation = null;
+        previewStatus.textContent = `Prévia inválida: ${error.message || 'não foi possível propagar esta trajetória.'}`;
+        previewStatus.classList.add('invalid');
+      }
+      renderPlots();
+    }
+
+    function scheduleBurnPreview(stopPlayback = true) {
+      if (stopPlayback) pause(false);
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(refreshBurnPreview, 80);
+    }
+
+    function zeroBurnControls() {
+      for (const axis of ['radial', 'tangential']) {
+        byId(`${axis}Burn`).value = 0;
+        byId(`${axis}BurnNumber`).value = 0;
+      }
+      updateBurnReadout();
+      clearBurnPreview(true);
+    }
+
+    function applyBurn() {
+      if (!simulation) return;
+      pause(false);
+      const radial = num('radialBurnNumber') || 0;
+      const tangential = num('tangentialBurnNumber') || 0;
+      if (Math.hypot(radial, tangential) < 1e-9) {
+        setStatus('Defina ao menos uma componente diferente de zero antes de aplicar a queima.', 'error');
+        return;
+      }
+      const time = simulation.times[currentIndex];
+      const burn = { id: nextBurnId++, name: `M${burns.length + 1}`, time, radial, tangential };
+      burns.push(burn);
+      burns.sort((a, b) => a.time - b.time || a.id - b.id);
+      renumberBurns();
+      const result = recompute(time);
+      if (!result.ok) {
+        burns = burns.filter(candidate => candidate.id !== burn.id);
+        renumberBurns();
+        renderBurnTable();
+        setStatus(`${burn.name} não foi aplicada: ${result.message} A linha do tempo anterior foi mantida.`, 'error');
+        scheduleBurnPreview(false);
+        return;
+      }
+      zeroBurnControls();
+      setStatus(`${burn.name} aplicada em t = ${formatTime(time)}. A trajetória futura foi recalculada.`, 'success');
+    }
+
+    function renumberBurns() {
+      burns.forEach((burn, index) => { burn.name = `M${index + 1}`; });
+    }
+
+    function removeBurn(id) {
+      pause(false);
+      const oldTime = simulation ? simulation.times[currentIndex] : 0;
+      const previousBurns = burns.slice();
+      burns = burns.filter(burn => burn.id !== id);
+      renumberBurns();
+      const result = recompute(oldTime);
+      if (!result.ok) {
+        burns = previousBurns;
+        renumberBurns();
+        renderBurnTable();
+        setStatus(`A manobra não foi removida: ${result.message} A linha do tempo anterior foi mantida.`, 'error');
+        return;
+      }
+      setStatus('Manobra removida e trajetória futura recalculada.', 'success');
+    }
+
+    function clearBurns() {
+      pause(false);
+      const oldTime = simulation ? simulation.times[currentIndex] : 0;
+      const previousBurns = burns.slice();
+      const previousNextBurnId = nextBurnId;
+      burns = [];
+      nextBurnId = 1;
+      const result = recompute(oldTime);
+      if (!result.ok) {
+        burns = previousBurns;
+        nextBurnId = previousNextBurnId;
+        renderBurnTable();
+        setStatus(`As manobras não foram removidas: ${result.message} A linha do tempo anterior foi mantida.`, 'error');
+        return;
+      }
+      setStatus('Todas as manobras foram removidas.', 'success');
+    }
+
+    function renderBurnTable() {
+      const tbody = byId('burnTableBody');
+      if (burns.length === 0) {
+        tbody.innerHTML = '<tr><td class="empty-row" colspan="6">Nenhuma manobra planejada.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = burns.map(burn => `
+        <tr>
+          <td><b>${burn.name}</b></td>
+          <td>${formatTime(burn.time)}</td>
+          <td>${formatNumber(burn.radial, 1)}</td>
+          <td>${formatNumber(burn.tangential, 1)}</td>
+          <td>${formatNumber(Math.hypot(burn.radial, burn.tangential), 1)}</td>
+          <td><button class="small danger" type="button" onclick="removeBurn(${burn.id})">Remover</button></td>
+        </tr>`).join('');
+    }
+
+    function updateOrbitVisibility(prefix) {
+      const circular = byId(`${prefix}Circular`).checked;
+      byId(`${prefix}CircularFields`).classList.toggle('hidden', !circular);
+      byId(`${prefix}GeneralFields`).classList.toggle('hidden', circular);
+    }
+
+    function defaultChaserApogee(targetAltitude = 400, chaserAltitude = 1000) {
+      const targetRadius = EARTH_RADIUS + targetAltitude;
+      const chaserRadius = EARTH_RADIUS + chaserAltitude;
+      const targetSpeed = Math.sqrt(MU / targetRadius);
+      const energy = targetSpeed * targetSpeed / 2 - MU / chaserRadius;
+      const semiMajor = -MU / (2 * energy);
+      return 2 * semiMajor - chaserRadius - EARTH_RADIUS;
+    }
+
+    function setPair(id, value) {
+      byId(id).value = value;
+      const slider = byId(`${id}Slider`);
+      if (slider) slider.value = value;
+    }
+
+    function resetScenario() {
+      pause(false);
+      burns = [];
+      nextBurnId = 1;
+      byId('targetCircular').checked = true;
+      setPair('targetAlt', 400);
+      setPair('targetPhase', 0);
+      setPair('targetPerigee', 400);
+      setPair('targetApogee', 400);
+      setPair('targetArgPerigee', 0);
+      setPair('targetTrueAnomaly', 0);
+
+      byId('chaserCircular').checked = false;
+      setPair('chaserAlt', 1000);
+      setPair('chaserPhase', 0);
+      setPair('chaserPerigee', 1000);
+      const apogee = defaultChaserApogee(400, 1000);
+      setPair('chaserApogee', apogee.toFixed(1));
+      setPair('chaserArgPerigee', 0);
+      setPair('chaserTrueAnomaly', 0);
+
+      setPair('durationHours', 6);
+      setPair('integrationStep', 5);
+      byId('timeWarp').value = 120;
+      byId('lvcScale').value = 'full';
+      zeroBurnControls();
+      updateOrbitVisibility('target');
+      updateOrbitVisibility('chaser');
+      recompute(0);
+      const targetSpeed = Math.sqrt(MU / (EARTH_RADIUS + 400));
+      byId('scenarioNote').textContent = `Condição inicial: R-bar exterior, altitude 1000 km e v tangencial ${formatNumber(targetSpeed, 4)} km/s, igual à do Target. Isso produz apogeu de aproximadamente ${formatNumber(apogee, 1)} km.`;
+      setStatus('Cenário inicial restaurado: Target a 400 km e Chaser na R-bar exterior a 1000 km.', 'success');
+    }
+
+    function recompute(preserveTime = null) {
+      pause(false);
+      clearTimeout(previewTimer);
+      previewTimer = null;
+      previewSimulation = null;
+      const requestedTime = preserveTime === null && simulation ? simulation.times[currentIndex] : (preserveTime || 0);
+      try {
+        simulation = simulate();
+        const endTime = simulation.times[simulation.times.length - 1];
+        byId('timeSlider').max = endTime;
+        byId('timeSlider').step = simulation.params.integrationStep;
+        currentIndex = clamp(Math.round(requestedTime / simulation.params.integrationStep), 0, simulation.times.length - 1);
+        renderBurnTable();
+        updateTelemetry();
+        renderPlots();
+        const targetElements = orbitalElements(
+          [simulation.targetX[0], simulation.targetY[0]],
+          [simulation.targetVx[0], simulation.targetVy[0]]
+        );
+        setStatus(`Simulação atualizada: ${simulation.times.length.toLocaleString('pt-BR')} pontos, dt = ${formatNumber(simulation.params.integrationStep, 1)} s, e do Target = ${formatNumber(targetElements.eccentricity, 5)}.`);
+        scheduleBurnPreview(false);
+        return { ok: true, message: '' };
+      } catch (error) {
+        console.error(error);
+        const message = error.message || 'Não foi possível calcular a trajetória.';
+        setStatus(message, 'error');
+        return { ok: false, message };
+      }
+    }
+
+    function scheduleRecompute() {
+      clearTimeout(recomputeTimer);
+      recomputeTimer = setTimeout(() => recompute(), 140);
+    }
+
+    function bindPair(sliderId, numberId, onChange = scheduleRecompute) {
+      const slider = byId(sliderId);
+      const numberInput = byId(numberId);
+      slider.addEventListener('input', () => {
+        numberInput.value = slider.value;
+        onChange();
+      });
+      numberInput.addEventListener('input', () => {
+        slider.value = numberInput.value;
+        onChange();
+      });
+      slider.addEventListener('dblclick', () => {
+        const resetValue = Number(slider.min) <= 0 && Number(slider.max) >= 0 ? 0 : Number(slider.min);
+        slider.value = resetValue;
+        numberInput.value = resetValue;
+        onChange();
+      });
+    }
+
+    function bindBurnAxis(axis) {
+      const slider = byId(`${axis}Burn`);
+      const numberInput = byId(`${axis}BurnNumber`);
+      const scale = byId(`${axis}Scale`);
+      const syncFromSlider = () => {
+        numberInput.value = slider.value;
+        updateBurnReadout();
+        scheduleBurnPreview();
+      };
+      const syncFromNumber = () => {
+        slider.value = clamp(Number(numberInput.value) || 0, Number(slider.min), Number(slider.max));
+        updateBurnReadout();
+        scheduleBurnPreview();
+      };
+      slider.addEventListener('input', syncFromSlider);
+      numberInput.addEventListener('input', syncFromNumber);
+      slider.addEventListener('dblclick', () => {
+        slider.value = 0;
+        numberInput.value = 0;
+        updateBurnReadout();
+        scheduleBurnPreview();
+      });
+      scale.addEventListener('change', () => {
+        const limit = Number(scale.value);
+        slider.min = -limit;
+        slider.max = limit;
+        slider.step = limit <= 10 ? 0.01 : limit <= 100 ? 0.1 : 1;
+        slider.value = clamp(Number(numberInput.value) || 0, -limit, limit);
+        numberInput.value = slider.value;
+        updateBurnReadout();
+        scheduleBurnPreview();
+      });
+    }
+
+    function initialize() {
+      const orbitPairs = [
+        ['targetAltSlider', 'targetAlt'], ['targetPhaseSlider', 'targetPhase'],
+        ['targetPerigeeSlider', 'targetPerigee'], ['targetApogeeSlider', 'targetApogee'],
+        ['targetArgPerigeeSlider', 'targetArgPerigee'], ['targetTrueAnomalySlider', 'targetTrueAnomaly'],
+        ['chaserAltSlider', 'chaserAlt'], ['chaserPhaseSlider', 'chaserPhase'],
+        ['chaserPerigeeSlider', 'chaserPerigee'], ['chaserApogeeSlider', 'chaserApogee'],
+        ['chaserArgPerigeeSlider', 'chaserArgPerigee'], ['chaserTrueAnomalySlider', 'chaserTrueAnomaly'],
+        ['durationHoursSlider', 'durationHours'], ['integrationStepSlider', 'integrationStep']
+      ];
+      orbitPairs.forEach(pair => bindPair(pair[0], pair[1]));
+      bindBurnAxis('radial');
+      bindBurnAxis('tangential');
+
+      for (const prefix of ['target', 'chaser']) {
+        byId(`${prefix}Circular`).addEventListener('change', () => {
+          updateOrbitVisibility(prefix);
+          scheduleRecompute();
+        });
+      }
+      byId('timeSlider').addEventListener('input', event => {
+        pause(false);
+        setCurrentTime(Number(event.target.value));
+      });
+      byId('lvcScale').addEventListener('change', renderPlots);
+      window.addEventListener('resize', () => {
+        clearTimeout(recomputeTimer);
+        recomputeTimer = setTimeout(renderPlots, 120);
+      });
+      window.addEventListener('keydown', event => {
+        if (event.target.matches('input, select, button')) return;
+        if (event.code === 'Space') { event.preventDefault(); playbackDirection === 0 ? play(1) : pause(); }
+        if (event.code === 'ArrowLeft') { event.preventDefault(); stepTime(event.shiftKey ? -60 : -10); }
+        if (event.code === 'ArrowRight') { event.preventDefault(); stepTime(event.shiftKey ? 60 : 10); }
+      });
+
+      resetScenario();
+    }
+
+    window.addEventListener('load', initialize);
+  </script>
+</body>
+</html>
